@@ -3,6 +3,7 @@
 #include "Robot.h"
 #include "Camera.h"
 #include <iostream>
+#include <cstdlib>
 
 Robot robot;
 Camera camera;
@@ -10,7 +11,11 @@ int lastMouseX, lastMouseY;
 bool isDragging = false;
 bool isZooming = false;
 
+bool keys[256];
+
 void init() {
+    for (int i = 0; i < 256; i++) keys[i] = false;
+
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glEnable(GL_DEPTH_TEST);
     
@@ -48,26 +53,34 @@ void display() {
 }
 
 void update(int value) {
-    robot.update(0.016f); // Approx 60fps
+    float moveSpeed = 0.2f;
+    float turnSpeed = 3.0f;
+    
+    if (keys['w'] || keys['W']) robot.moveForward(moveSpeed);
+    if (keys['s'] || keys['S']) robot.moveForward(-moveSpeed);
+    if (keys['a'] || keys['A']) robot.turn(turnSpeed);
+    if (keys['d'] || keys['D']) robot.turn(-turnSpeed);
+
+    robot.update(0.016f);
     glutPostRedisplay();
     glutTimerFunc(16, update, 0);
 }
 
 void keyboard(unsigned char key, int x, int y) {
-    float moveSpeed = 0.2f;
-    float turnSpeed = 5.0f;
+    if (key < 256) keys[key] = true;
+    
     switch (key) {
-    case 'w': case 'W': robot.moveForward(moveSpeed); break;
-    case 's': case 'S': robot.moveForward(-moveSpeed); break;
-    case 'a': case 'A': robot.turn(turnSpeed); break;
-    case 'd': case 'D': robot.turn(-turnSpeed); break;
     case '1': robot.setForm(HUMANOID); break;
     case '2': robot.setForm(CAR); break;
-    case '3': robot.setForm(PLANE); break;
-    case '4': robot.setForm(BOAT); break;
+    case '3': robot.setForm(BOAT); break;
+    case '4': robot.setForm(PLANE); break;
     case 'g': case 'G': robot.greet(); break;
     case 27: exit(0); break;
     }
+}
+
+void keyboardUp(unsigned char key, int x, int y) {
+    if (key < 256) keys[key] = false;
 }
 
 void mouse(int button, int state, int x, int y) {
@@ -86,6 +99,10 @@ void mouse(int button, int state, int x, int y) {
         } else {
             isZooming = false;
         }
+    } else if (button == 3) { // Rueda arriba
+        if (state == GLUT_DOWN) camera.zoom(-1.5f);
+    } else if (button == 4) { // Rueda abajo
+        if (state == GLUT_DOWN) camera.zoom(1.5f);
     }
 }
 
@@ -121,26 +138,23 @@ void reshape(int w, int h) {
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    glutInitWindowSize(1024, 768);
-    glutCreateWindow("Transformers Robot Project");
-    
+    glutInitWindowSize(800, 600);
+    glutCreateWindow("Transformer Robot");
+
     glewInit();
     init();
-    
+
     glutDisplayFunc(display);
-    glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard);
+    glutKeyboardUpFunc(keyboardUp); // ADDED THIS
     glutMouseFunc(mouse);
     glutMotionFunc(motion);
-    glutMouseWheelFunc(mouseWheel);
     glutTimerFunc(16, update, 0);
-    
-    std::cout << "Controls:" << std::endl;
-    std::cout << "WASD: Move Robot" << std::endl;
-    std::cout << "1: Humanoid, 2: Car, 3: Plane, 4: Boat" << std::endl;
-    std::cout << "Left Click + Drag: Rotate Camera" << std::endl;
-    std::cout << "Right Click + Drag / Mouse Wheel: Zoom" << std::endl;
-    std::cout << "ESC: Exit" << std::endl;
+
+    // Setup basic projection
+    glMatrixMode(GL_PROJECTION);
+    gluPerspective(45.0, 800.0 / 600.0, 1.0, 100.0);
+    glMatrixMode(GL_MODELVIEW);
 
     glutMainLoop();
     return 0;

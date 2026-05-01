@@ -1,2 +1,7 @@
 ﻿  Robot.cpp
-  Proyecto #3.vcxproj -> C:\Users\matib\Documents\UNI\10mo Semestre\Graficos por Computadora\Proyecto Transformers\x64\Debug\Proyecto #3.exe
+  main.cpp
+\Robot.cpp(1,1): error C1083: No se puede abrir el archivo origen: 'Robot.cpp': No such file or directory
+  (compilando archivo de origen "/Robot.cpp")
+  
+C:\Users\matib\source\repos\Andoumeda\graficos-proyecto-transformers\main.cpp(3,10): error C1083: No se puede abrir el archivo incluir: 'Robot.h': No such file or directory
+  Generando código...
