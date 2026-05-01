@@ -19,8 +19,8 @@ public:
         float z = distance * cos(elevation * 3.14159f / 180.0f) * cos(azimuth * 3.14159f / 180.0f);
 
         gluLookAt(x + centerX, y + centerY, z + centerZ,
-                  centerX, centerY, centerZ,
-                  0, 1, 0);
+            centerX, centerY, centerZ,
+            0, 1, 0);
     }
 
     void zoom(float delta) {
