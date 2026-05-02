@@ -72,26 +72,26 @@ const PartTransform boatParts[19] = {
 const PartTransform planeParts[19] = {
 {0.000f, 0.800f, 0.000f, 90.000f, 0.000f, 0.000f, 0.450f, 2.200f, 0.450f, 0, 0.667f, 0.000f, 0.000f}, // 0: torso
 {0.000f, 0.800f, 0.037f, 0.000f, 0.000f, 0.000f, 0.500f, 0.350f, 1.800f, 0, 0.667f, 0.000f, 0.000f}, // 1: cadera
-{1.001f, 0.789f, -0.313f, 177.000f, -1.000f, 90.000f, -0.125f, 1.575f, 0.565f, 1, 0.000f, 0.667f, 0.000f}, // 2: brazo-der
-{-1.001f, 0.789f, -0.313f, 177.000f, 1.000f, -90.000f, -0.125f, 1.575f, 0.565f, 1, 0.000f, 0.667f, 0.000f}, // 3: brazo-izq
-{1.671f, 0.764f, -0.324f, 0.000f, 0.000f, 0.000f, 0.150f, 0.450f, 0.150f, 1, 0.000f, 0.667f, 0.000f}, // 4: antebrazo-der
-{-1.671f, 0.764f, -0.324f, 0.000f, 0.000f, 0.000f, 0.150f, 0.450f, 0.150f, 1, 0.000f, 0.667f, 0.000f}, // 5: antebrazo-izq
-{0.412f, 0.850f, 0.950f, 0.000f, 90.000f, 90.000f, 0.059f, 0.199f, 0.745f, 1, 0.000f, 0.667f, 0.000f}, // 6: muslo-der
-{-0.412f, 0.850f, 0.950f, 0.000f, 90.000f, 90.000f, 0.059f, 0.199f, 0.745f, 1, 0.000f, 0.667f, 0.000f}, // 7: muslo-izq
-{0.000f, 1.150f, 1.000f, 0.000f, 0.000f, 0.000f, 0.080f, 0.650f, 0.350f, 1, 0.000f, 0.667f, 0.000f}, // 8: pierna-der
-{0.000f, 0.800f, 1.100f, 90.000f, 0.000f, 0.000f, 0.300f, 0.150f, 0.300f, 1, 0.667f, 0.000f, 0.000f}, // 9: pierna-izq (torso-like color)
+{0.846f, 0.789f, -0.313f, 177.000f, -1.000f, 90.000f, -0.125f, 1.291f, 0.565f, 1, 0.000f, 0.667f, 0.000f}, // 2: brazo-der
+{-0.846f, 0.789f, -0.313f, 177.000f, 1.000f, -90.000f, -0.125f, 1.291f, 0.565f, 1, 0.000f, 0.667f, 0.000f}, // 3: brazo-izq
+{1.368f, 0.764f, -0.324f, 0.000f, 0.000f, 0.000f, 0.150f, 0.450f, 0.150f, 1, 0.000f, 0.667f, 0.000f}, // 4: antebrazo-der
+{-1.368f, 0.764f, -0.324f, 0.000f, 0.000f, 0.000f, 0.150f, 0.450f, 0.150f, 1, 0.000f, 0.667f, 0.000f}, // 5: antebrazo-izq
+{0.000f, 0.815f, -1.508f, 90.000f, 0.000f, 0.000f, -0.020f, 0.111f, 0.880f, 1, 0.000f, 0.667f, 0.000f}, // 6: muslo-der (helice-vertical)
+{0.000f, 0.815f, -1.508f, 90.000f, 0.000f, 0.000f, 0.880f, 0.111f, -0.020f, 1, 0.000f, 0.667f, 0.000f}, // 7: muslo-izq (helice-horizontal)
+{0.000f, 0.788f, 1.000f, 0.000f, 0.000f, 90.000f, 0.080f, 1.248f, 0.350f, 1, 0.000f, 0.667f, 0.000f}, // 8: pierna-der
+{0.000f, 0.800f, 1.100f, 90.000f, 0.000f, 0.000f, 0.300f, 0.150f, 0.300f, 1, 0.667f, 0.000f, 0.000f}, // 9: pierna-izq
 {0.000f, 0.574f, -0.900f, 0.000f, 0.000f, 0.000f, 0.400f, 0.060f, 0.250f, 0, 0.000f, 0.000f, 0.667f}, // 10: prisma (pie-der)
 {0.000f, 0.574f, 0.800f, 0.000f, 0.000f, 0.000f, 0.400f, 0.060f, 0.250f, 0, 0.000f, 0.000f, 0.667f}, // 11: prisma_1 (pie-izq)
-{1.671f, 0.580f, -0.332f, 90.000f, 0.000f, 0.000f, 0.120f, 0.250f, 0.120f, 2, 1.000f, 1.000f, 1.000f}, // 12: mano-der
-{-1.671f, 0.580f, -0.332f, 90.000f, 0.000f, 0.000f, 0.120f, 0.250f, 0.120f, 2, 1.000f, 1.000f, 1.000f}, // 13: mano-izq
-{0.000f, 0.799f, -1.134f, 0.000f, 0.000f, 0.000f, 0.395f, 0.399f, 0.600f, 2, 0.800f, 0.800f, 0.800f}, // 14: cabeza
+{1.363f, 0.580f, -0.332f, 90.000f, 0.000f, 0.000f, 0.120f, 0.250f, 0.120f, 2, 1.000f, 1.000f, 1.000f}, // 12: mano-der
+{-1.363f, 0.580f, -0.332f, 90.000f, 0.000f, 0.000f, 0.120f, 0.250f, 0.120f, 2, 1.000f, 1.000f, 1.000f}, // 13: mano-izq
+{0.000f, 0.815f, -1.283f, 0.000f, 0.000f, 0.000f, 0.464f, 0.389f, 0.425f, 2, 0.800f, 0.800f, 0.800f}, // 14: cabeza
 {-0.200f, 0.480f, -0.900f, 0.000f, 0.000f, -90.000f, 0.180f, 0.080f, 0.180f, 1, 0.000f, 0.000f, 0.000f}, // 15: rueda-del-izq
 {0.200f, 0.480f, -0.900f, 0.000f, 0.000f, -90.000f, 0.180f, 0.080f, 0.180f, 1, 0.000f, 0.000f, 0.000f}, // 16: rueda-del-der
 {0.200f, 0.516f, 0.800f, 0.000f, 0.000f, -90.000f, 0.180f, 0.080f, 0.180f, 1, 0.000f, 0.000f, 0.000f}, // 17: rueda-tras-der
 {-0.200f, 0.516f, 0.800f, 0.000f, 0.000f, -90.000f, 0.180f, 0.080f, 0.180f, 1, 0.000f, 0.000f, 0.000f}  // 18: rueda-tras-izq
 };
 
-Robot::Robot() : posX(0), posY(0), posZ(0), rotY(0), currentForm(HUMANOID), targetForm(HUMANOID), walkCycle(0), wheelRotation(0), isMoving(false), transformFactor(1.0f), greetingTimer(0.0f), shootingTimer(0.0f), moveState(IDLE), isEditMode(false), shoulderRightAngle(0), shoulderLeftAngle(0), elbowRightAngle(0), elbowLeftAngle(0), hipRightAngle(0), hipLeftAngle(0), kneeRightAngle(0), kneeLeftAngle(0), dragJointIndex(-1), isDraggingJoint(false) {
+Robot::Robot() : posX(0), posY(0), posZ(0), rotY(0), currentForm(HUMANOID), targetForm(HUMANOID), walkCycle(0), wheelRotation(0), isMoving(false), transformFactor(1.0f), greetingTimer(0.0f), shootingTimer(0.0f), propellerAngle(0.0f), isDraggingPropeller(false), moveState(IDLE), isEditMode(false), shoulderRightAngle(0), shoulderLeftAngle(0), elbowRightAngle(0), elbowLeftAngle(0), hipRightAngle(0), hipLeftAngle(0), kneeRightAngle(0), kneeLeftAngle(0), dragJointIndex(-1), isDraggingJoint(false) {
     for (int i = 0; i < 8; i++) controlPoints[i].visible = false;
 }
 
@@ -165,7 +165,7 @@ void Robot::moveForward(float distance) {
     posX += sin(rad) * distance;
     posZ += cos(rad) * distance;
     isMoving = true;
-    greetingTimer = 0; // Cancel greeting if moving
+    greetingTimer = 0; // cancela el saludo si se mueve
 }
 
 void Robot::toggleForward() {
@@ -188,7 +188,7 @@ void Robot::toggleBackward() {
 
 void Robot::greet() {
     if (greetingTimer <= 0) {
-        greetingTimer = 2.0f; // 2 seconds duration
+        greetingTimer = 2.0f;
         playGreetingSound();
     }
 }
@@ -226,6 +226,11 @@ void Robot::update(float deltaTime) {
             if (wheelRotation > 360.0f) wheelRotation -= 360.0f;
             walkCycle += deltaTime * 8.0f;
         }
+        // giro de helice automatico al moverse
+        if (targetForm == PLANE) {
+            propellerAngle += deltaTime * 720.0f;
+            if (propellerAngle > 360.0f) propellerAngle -= 360.0f;
+        }
     }
     isMoving = false;
 }
@@ -235,10 +240,9 @@ PartTransform Robot::getPartTransform(int partIdx, RobotForm form) {
     if (form == CAR) return carParts[partIdx];
     if (form == BOAT) return boatParts[partIdx];
     
-    // Para el avión, invertimos el eje Z para que el frente sea atrás
+    // invierte z para que el frente del avion apunte en +Z
     PartTransform t = planeParts[partIdx];
-    t.tz = -t.tz; 
-    t.ry += 180.0f; // Rotamos 180 grados para que mire hacia el otro lado
+    t.tz = -t.tz;
     return t;
 }
 
@@ -278,29 +282,24 @@ void Robot::drawPart(int partIdx, float factor) {
 
     float legSwing = (targetForm == HUMANOID) ? sin(walkCycle) * 20.0f : 0;
     
-    // Solo aplicar animaciones de movimiento en modo HUMANOIDE
+    // animacion de marcha solo en modo humanoide
     if (targetForm == HUMANOID) {
-        // Lado derecho: 2(brazo), 4(antebrazo), 6(muslo), 8(pierna), 10(pie)
         if (partIdx == 2 || partIdx == 4 || partIdx == 6 || partIdx == 8 || partIdx == 10) {
             t.rx += legSwing;
         }
-        // Lado izquierdo: 3(brazo), 5(antebrazo), 7(muslo), 9(pierna), 11(pie)
         if (partIdx == 3 || partIdx == 5 || partIdx == 7 || partIdx == 9 || partIdx == 11) {
             t.rx -= legSwing;
         }
     }
 
-    // Greeting animation
     if (greetingTimer > 0) {
         if (targetForm == HUMANOID) {
-            // Brazo derecho saluda (indice 2, 4)
             if (partIdx == 2 || partIdx == 4) {
                 float wave = sin(greetingTimer * 15.0f) * 30.0f;
                 t.rz += wave;
                 t.rx -= 140.0f;
             }
         } else {
-            // Luces parpadeando (indice 12 y 13 manos)
             if (partIdx == 12 || partIdx == 13) {
                 int blink = (int)(greetingTimer * 4.0f) % 2;
                 if (blink == 0) {
@@ -320,18 +319,16 @@ void Robot::drawPart(int partIdx, float factor) {
     glColor3f(t.r, t.g, t.b);
 
     if (t.shapeType == 0) {
-        // Prisma: escala directa en X, Y, Z
         drawCube(t.sx, t.sy, t.sz);
     } else if (t.shapeType == 1) {
-        // Cilindro: JSON convention -> Y = altura, XZ = radios/diametros
+        // rota el cilindro para que su eje quede alineado con Y local
         glPushMatrix();
-        glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);  // Local Z es ahora Global Y
-        glScalef(t.sx, t.sz, t.sy);            // Local X=X, Local Y=Z, Local Z=Y
-        glTranslatef(0.0f, 0.0f, -0.5f);       // Centrar en su eje
-        drawCylinder(0.5f, 1.0f);              // Radio 0.5 (diametro 1.0), altura 1.0
+        glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+        glScalef(t.sx, t.sz, t.sy);
+        glTranslatef(0.0f, 0.0f, -0.5f);
+        drawCylinder(0.5f, 1.0f);
         glPopMatrix();
     } else if (t.shapeType == 2) {
-        // Esfera: escala uniforme
         glScalef(t.sx, t.sy, t.sz);
         drawSphere(0.5f);
     }
@@ -434,7 +431,7 @@ void Robot::drawHierarchicalArm(bool rightSide, float shoulderSwing, float wave,
 }
 
 void Robot::drawHierarchicalVehicle(RobotForm form) {
-    PartTransform root = getPartTransform(1, form); // cadera como nodo raiz del vehiculo
+    PartTransform root = getPartTransform(1, form);
     float bob = 0.0f;
     float roll = 0.0f;
     float pitch = 0.0f;
@@ -463,6 +460,20 @@ void Robot::drawHierarchicalVehicle(RobotForm form) {
     for (int i = 0; i < 19; ++i) {
         if (i == 1) continue;
 
+        // helice: se dibuja aparte para aplicar el giro independiente
+        if (form == PLANE && (i == 6 || i == 7)) {
+            PartTransform t = getPartTransform(i, form);
+            glPushMatrix();
+            glTranslatef(t.tx - root.tx, t.ty - root.ty, t.tz - root.tz);
+            glRotatef(propellerAngle, 0.0f, 0.0f, 1.0f);
+            glRotatef(t.ry, 0, 1, 0);
+            glRotatef(t.rx, 1, 0, 0);
+            glRotatef(t.rz, 0, 0, 1);
+            drawPrimitiveAtOrigin(t);
+            glPopMatrix();
+            continue;
+        }
+
         float extraRx = 0.0f;
         float extraRy = 0.0f;
         float extraRz = 0.0f;
@@ -473,14 +484,6 @@ void Robot::drawHierarchicalVehicle(RobotForm form) {
 
         if (form == BOAT && (i == 4 || i == 5)) {
             extraRy = sin(walkCycle * 2.0f) * 18.0f;
-        }
-
-        if (form == PLANE && (i == 2 || i == 3)) {
-            extraRz = sin(walkCycle * 1.5f) * 5.0f;
-        }
-
-        if (form == PLANE && (i == 12 || i == 13)) {
-            extraRx = wheelRotation * 2.0f;
         }
 
         drawLocalPart(root, i, form, extraRx, extraRy, extraRz);

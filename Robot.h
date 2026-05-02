@@ -29,16 +29,16 @@ public:
     RobotForm currentForm;
     RobotForm targetForm;
     
-    // Animation states
     float walkCycle;
     float wheelRotation;
     bool isMoving;
-    float transformFactor; // 0.0 to 1.0
+    float transformFactor; // 0.0 a 1.0
     MoveState moveState;
-    float greetingTimer; // timer for greeting animation
-    float shootingTimer; // timer for shooting visual effect
+    float greetingTimer; // duracion del saludo
+    float shootingTimer; // duracion del disparo
+    float propellerAngle; // angulo de la helice en modo avion
+    bool isDraggingPropeller; // true si el usuario arrastra la helice
 
-    // Pose editing
     bool isEditMode;
     float shoulderRightAngle, shoulderLeftAngle;
     float elbowRightAngle, elbowLeftAngle;
@@ -59,8 +59,8 @@ public:
     void moveForward(float distance);
     void toggleForward();
     void toggleBackward();
-    void greet(); // trigger greeting
-    void shoot(); // trigger shooting effect and sound
+    void greet(); // inicia animacion de saludo
+    void shoot(); // disparo
     bool canEdit() const;
     void toggleEditMode();
     int hitTestControlPoint(int sx, int sy) const;

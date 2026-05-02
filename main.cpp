@@ -18,15 +18,15 @@ void init() {
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glEnable(GL_DEPTH_TEST);
-    
-    // Lighting
+
+    // iluminacion
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
     glEnable(GL_COLOR_MATERIAL);
-    
+
     GLfloat lightPos[] = { 5.0f, 10.0f, 5.0f, 1.0f };
     glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
-    
+
     GLfloat ambient[] = { 0.2f, 0.2f, 0.2f, 1.0f };
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
 }
@@ -34,10 +34,9 @@ void init() {
 void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
-    
     camera.apply();
-    
-    // Draw Ground
+
+    // piso
     glColor3f(0.3f, 0.3f, 0.3f);
     glBegin(GL_QUADS);
     glVertex3f(-20, 0, -20);
@@ -46,9 +45,7 @@ void display() {
     glVertex3f(20, 0, -20);
     glEnd();
 
-    // Draw Robot
     robot.draw();
-    
     glutSwapBuffers();
 }
 
@@ -93,7 +90,12 @@ void mouse(int button, int state, int x, int y) {
             lastMouseX = x;
             lastMouseY = y;
 
-            if (robot.isEditMode) {
+            // modo avion: arrastrar helice con el mouse
+            if (robot.targetForm == PLANE && robot.currentForm == PLANE &&
+                robot.transformFactor >= 1.0f && robot.hitTestRobotBody(x, y)) {
+                robot.isDraggingPropeller = true;
+                isDragging = false;
+            } else if (robot.isEditMode) {
                 int cp = robot.hitTestControlPoint(x, y);
                 if (cp >= 0) {
                     robot.startDragJoint(cp);
@@ -112,6 +114,7 @@ void mouse(int button, int state, int x, int y) {
             }
         } else {
             robot.endDragJoint();
+            robot.isDraggingPropeller = false;
             isDragging = false;
         }
     } else if (button == GLUT_RIGHT_BUTTON) {
@@ -132,7 +135,11 @@ void motion(int x, int y) {
     int dx = x - lastMouseX;
     int dy = y - lastMouseY;
 
-    if (robot.isDraggingJoint) {
+    if (robot.isDraggingPropeller) {
+        robot.propellerAngle += (float)dx * 2.0f;
+        if (robot.propellerAngle > 360.0f) robot.propellerAngle -= 360.0f;
+        if (robot.propellerAngle < 0.0f) robot.propellerAngle += 360.0f;
+    } else if (robot.isDraggingJoint) {
         robot.dragJoint((float)dx);
     } else if (isDragging) {
         camera.rotate((float)dx * 0.5f, (float)dy * 0.5f);
@@ -170,12 +177,11 @@ int main(int argc, char** argv) {
 
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboard);
-    glutKeyboardUpFunc(keyboardUp); // ADDED THIS
+    glutKeyboardUpFunc(keyboardUp);
     glutMouseFunc(mouse);
     glutMotionFunc(motion);
     glutTimerFunc(16, update, 0);
 
-    // Setup basic projection
     glMatrixMode(GL_PROJECTION);
     gluPerspective(45.0, 800.0 / 600.0, 1.0, 100.0);
     glMatrixMode(GL_MODELVIEW);
