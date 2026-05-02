@@ -7,6 +7,12 @@
 #include <GL/freeglut.h>
 
 enum RobotForm { HUMANOID, CAR, BOAT, PLANE };
+enum MoveState { IDLE, MOVING_FORWARD, MOVING_BACKWARD };
+
+struct ControlPoint {
+    float screenX, screenY;
+    bool visible;
+};
 
 struct PartTransform {
     float tx, ty, tz;
@@ -28,8 +34,22 @@ public:
     float wheelRotation;
     bool isMoving;
     float transformFactor; // 0.0 to 1.0
+    MoveState moveState;
     float greetingTimer; // timer for greeting animation
     float shootingTimer; // timer for shooting visual effect
+
+    // Pose editing
+    bool isEditMode;
+    float shoulderRightAngle, shoulderLeftAngle;
+    float elbowRightAngle, elbowLeftAngle;
+    float hipRightAngle, hipLeftAngle;
+    float kneeRightAngle, kneeLeftAngle;
+    ControlPoint controlPoints[8];
+    int dragJointIndex;
+    bool isDraggingJoint;
+    double cachedModelView[16];
+    double cachedProjection[16];
+    int cachedViewport[4];
 
     Robot();
     void draw();
@@ -37,8 +57,17 @@ public:
     void setForm(RobotForm form);
     void turn(float angle);
     void moveForward(float distance);
+    void toggleForward();
+    void toggleBackward();
     void greet(); // trigger greeting
     void shoot(); // trigger shooting effect and sound
+    bool canEdit() const;
+    void toggleEditMode();
+    int hitTestControlPoint(int sx, int sy) const;
+    bool hitTestRobotBody(int sx, int sy) const;
+    void startDragJoint(int index);
+    void dragJoint(float dx);
+    void endDragJoint();
 
 private:
     void drawCube(float w, float h, float d);
@@ -48,8 +77,8 @@ private:
     void drawLocalPart(const PartTransform& parent, int partIdx, RobotForm form, float extraRx = 0.0f, float extraRy = 0.0f, float extraRz = 0.0f);
     void drawHierarchicalHumanoid();
     void drawHierarchicalVehicle(RobotForm form);
-    void drawHierarchicalArm(bool rightSide, float shoulderSwing, float wave);
-    void drawHierarchicalLeg(bool rightSide, float hipSwing, float kneeBend);
+    void drawHierarchicalArm(bool rightSide, float shoulderSwing, float wave, float userShoulderAngle, float userElbowAngle);
+    void drawHierarchicalLeg(bool rightSide, float hipSwing, float kneeBend, float userHipAngle, float userKneeAngle);
     void drawShotEffect();
     void playGreetingSound();
     void playShotSound();

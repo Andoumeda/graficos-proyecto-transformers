@@ -56,8 +56,9 @@ void update(int value) {
     float moveSpeed = 0.2f;
     float turnSpeed = 3.0f;
     
-    if (keys['w'] || keys['W']) robot.moveForward(moveSpeed);
-    if (keys['s'] || keys['S']) robot.moveForward(-moveSpeed);
+    if (robot.moveState == MOVING_FORWARD) robot.moveForward(moveSpeed);
+    else if (robot.moveState == MOVING_BACKWARD) robot.moveForward(-moveSpeed * 0.5f);
+
     if (keys['a'] || keys['A']) robot.turn(turnSpeed);
     if (keys['d'] || keys['D']) robot.turn(-turnSpeed);
 
@@ -70,6 +71,8 @@ void keyboard(unsigned char key, int x, int y) {
     if (key < 256) keys[key] = true;
     
     switch (key) {
+    case 'w': case 'W': robot.toggleForward(); break;
+    case 's': case 'S': robot.toggleBackward(); break;
     case '1': robot.setForm(HUMANOID); break;
     case '2': robot.setForm(CAR); break;
     case '3': robot.setForm(BOAT); break;
@@ -87,10 +90,28 @@ void keyboardUp(unsigned char key, int x, int y) {
 void mouse(int button, int state, int x, int y) {
     if (button == GLUT_LEFT_BUTTON) {
         if (state == GLUT_DOWN) {
-            isDragging = true;
             lastMouseX = x;
             lastMouseY = y;
+
+            if (robot.isEditMode) {
+                int cp = robot.hitTestControlPoint(x, y);
+                if (cp >= 0) {
+                    robot.startDragJoint(cp);
+                    isDragging = false;
+                } else {
+                    robot.toggleEditMode();
+                    isDragging = true;
+                }
+            } else {
+                if (robot.canEdit() && robot.hitTestRobotBody(x, y)) {
+                    robot.toggleEditMode();
+                    isDragging = false;
+                } else {
+                    isDragging = true;
+                }
+            }
         } else {
+            robot.endDragJoint();
             isDragging = false;
         }
     } else if (button == GLUT_RIGHT_BUTTON) {
@@ -100,25 +121,27 @@ void mouse(int button, int state, int x, int y) {
         } else {
             isZooming = false;
         }
-    } else if (button == 3) { // Rueda arriba
+    } else if (button == 3) {
         if (state == GLUT_DOWN) camera.zoom(-1.5f);
-    } else if (button == 4) { // Rueda abajo
+    } else if (button == 4) {
         if (state == GLUT_DOWN) camera.zoom(1.5f);
     }
 }
 
 void motion(int x, int y) {
-    if (isDragging) {
-        int dx = x - lastMouseX;
-        int dy = y - lastMouseY;
+    int dx = x - lastMouseX;
+    int dy = y - lastMouseY;
+
+    if (robot.isDraggingJoint) {
+        robot.dragJoint((float)dx);
+    } else if (isDragging) {
         camera.rotate((float)dx * 0.5f, (float)dy * 0.5f);
-        lastMouseX = x;
-        lastMouseY = y;
     } else if (isZooming) {
-        int dy = y - lastMouseY;
         camera.zoom((float)dy * 0.1f);
-        lastMouseY = y;
     }
+
+    lastMouseX = x;
+    lastMouseY = y;
     glutPostRedisplay();
 }
 

@@ -91,7 +91,9 @@ const PartTransform planeParts[19] = {
 {-0.200f, 0.516f, 0.800f, 0.000f, 0.000f, -90.000f, 0.180f, 0.080f, 0.180f, 1, 0.000f, 0.000f, 0.000f}  // 18: rueda-tras-izq
 };
 
-Robot::Robot() : posX(0), posY(0), posZ(0), rotY(0), currentForm(HUMANOID), targetForm(HUMANOID), walkCycle(0), wheelRotation(0), isMoving(false), transformFactor(1.0f), greetingTimer(0.0f), shootingTimer(0.0f) {}
+Robot::Robot() : posX(0), posY(0), posZ(0), rotY(0), currentForm(HUMANOID), targetForm(HUMANOID), walkCycle(0), wheelRotation(0), isMoving(false), transformFactor(1.0f), greetingTimer(0.0f), shootingTimer(0.0f), moveState(IDLE), isEditMode(false), shoulderRightAngle(0), shoulderLeftAngle(0), elbowRightAngle(0), elbowLeftAngle(0), hipRightAngle(0), hipLeftAngle(0), kneeRightAngle(0), kneeLeftAngle(0), dragJointIndex(-1), isDraggingJoint(false) {
+    for (int i = 0; i < 8; i++) controlPoints[i].visible = false;
+}
 
 void Robot::drawCube(float w, float h, float d) {
     glPushMatrix();
@@ -166,6 +168,24 @@ void Robot::moveForward(float distance) {
     greetingTimer = 0; // Cancel greeting if moving
 }
 
+void Robot::toggleForward() {
+    if (moveState == MOVING_FORWARD) {
+        moveState = IDLE;
+    } else {
+        moveState = MOVING_FORWARD;
+        if (isEditMode) toggleEditMode();
+    }
+}
+
+void Robot::toggleBackward() {
+    if (moveState == MOVING_BACKWARD) {
+        moveState = IDLE;
+    } else {
+        moveState = MOVING_BACKWARD;
+        if (isEditMode) toggleEditMode();
+    }
+}
+
 void Robot::greet() {
     if (greetingTimer <= 0) {
         greetingTimer = 2.0f; // 2 seconds duration
@@ -182,6 +202,10 @@ void Robot::update(float deltaTime) {
     if (transformFactor < 1.0f) {
         transformFactor += deltaTime * 1.5f;
         if (transformFactor > 1.0f) transformFactor = 1.0f;
+    }
+
+    if (transformFactor >= 1.0f && currentForm != targetForm) {
+        currentForm = targetForm;
     }
 
     if (greetingTimer > 0) {
@@ -327,7 +351,7 @@ void Robot::drawLocalPart(const PartTransform& parent, int partIdx, RobotForm fo
     glPopMatrix();
 }
 
-void Robot::drawHierarchicalArm(bool rightSide, float shoulderSwing, float wave) {
+void Robot::drawHierarchicalArm(bool rightSide, float shoulderSwing, float wave, float userShoulderAngle, float userElbowAngle) {
     int upperIdx = rightSide ? 2 : 3;
     int lowerIdx = rightSide ? 4 : 5;
     int handIdx = rightSide ? 12 : 13;
@@ -340,7 +364,10 @@ void Robot::drawHierarchicalArm(bool rightSide, float shoulderSwing, float wave)
     float shoulderY = 2.42f;
     float elbowBend = rightSide ? -8.0f : 8.0f;
 
-    if (rightSide && greetingTimer > 0.0f) {
+    if (isEditMode) {
+        shoulderSwing = userShoulderAngle;
+        elbowBend = userElbowAngle;
+    } else if (rightSide && greetingTimer > 0.0f) {
         shoulderSwing = -120.0f;
         elbowBend = -55.0f + wave;
     }
@@ -350,6 +377,25 @@ void Robot::drawHierarchicalArm(bool rightSide, float shoulderSwing, float wave)
     glRotatef(shoulderSwing, 1.0f, 0.0f, 0.0f);
     glRotatef(side * 8.0f, 0.0f, 0.0f, 1.0f);
 
+    if (isEditMode) {
+        GLint vp[4]; glGetIntegerv(GL_VIEWPORT, vp);
+        GLdouble mv[16], pj[16];
+        glGetDoublev(GL_MODELVIEW_MATRIX, mv);
+        glGetDoublev(GL_PROJECTION_MATRIX, pj);
+        GLdouble sx, sy, sz;
+        gluProject(0, 0, 0, mv, pj, vp, &sx, &sy, &sz);
+        int idx = rightSide ? 0 : 1;
+        controlPoints[idx].screenX = (float)sx;
+        controlPoints[idx].screenY = (float)(vp[3] - sy);
+        controlPoints[idx].visible = true;
+
+        glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+        glDisable(GL_LIGHTING);
+        glColor3f(1.0f, 1.0f, 0.0f);
+        glutSolidSphere(0.08, 12, 12);
+        glPopAttrib();
+    }
+
     glPushMatrix();
     glTranslatef(0.0f, -upper.sy * 0.5f, 0.0f);
     drawPrimitiveAtOrigin(upper);
@@ -357,6 +403,25 @@ void Robot::drawHierarchicalArm(bool rightSide, float shoulderSwing, float wave)
 
     glTranslatef(0.0f, -upper.sy, 0.0f);
     glRotatef(elbowBend, 1.0f, 0.0f, 0.0f);
+
+    if (isEditMode) {
+        GLint vp[4]; glGetIntegerv(GL_VIEWPORT, vp);
+        GLdouble mv[16], pj[16];
+        glGetDoublev(GL_MODELVIEW_MATRIX, mv);
+        glGetDoublev(GL_PROJECTION_MATRIX, pj);
+        GLdouble sx, sy, sz;
+        gluProject(0, 0, 0, mv, pj, vp, &sx, &sy, &sz);
+        int idx = rightSide ? 2 : 3;
+        controlPoints[idx].screenX = (float)sx;
+        controlPoints[idx].screenY = (float)(vp[3] - sy);
+        controlPoints[idx].visible = true;
+
+        glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+        glDisable(GL_LIGHTING);
+        glColor3f(0.0f, 1.0f, 1.0f);
+        glutSolidSphere(0.08, 12, 12);
+        glPopAttrib();
+    }
 
     glPushMatrix();
     glTranslatef(0.0f, -lower.sy * 0.5f, 0.0f);
@@ -457,7 +522,7 @@ void Robot::drawShotEffect() {
     glPopAttrib();
 }
 
-void Robot::drawHierarchicalLeg(bool rightSide, float hipSwing, float kneeBend) {
+void Robot::drawHierarchicalLeg(bool rightSide, float hipSwing, float kneeBend, float userHipAngle, float userKneeAngle) {
     int thighIdx = rightSide ? 6 : 7;
     int shinIdx = rightSide ? 8 : 9;
     int footIdx = rightSide ? 10 : 11;
@@ -469,9 +534,33 @@ void Robot::drawHierarchicalLeg(bool rightSide, float hipSwing, float kneeBend) 
     float hipX = side * 0.245f;
     float hipY = 1.31f;
 
+    if (isEditMode) {
+        hipSwing = userHipAngle;
+        kneeBend = userKneeAngle;
+    }
+
     glPushMatrix();
     glTranslatef(hipX, hipY, 0.0f);
     glRotatef(hipSwing, 1.0f, 0.0f, 0.0f);
+
+    if (isEditMode) {
+        GLint vp[4]; glGetIntegerv(GL_VIEWPORT, vp);
+        GLdouble mv[16], pj[16];
+        glGetDoublev(GL_MODELVIEW_MATRIX, mv);
+        glGetDoublev(GL_PROJECTION_MATRIX, pj);
+        GLdouble sx, sy, sz;
+        gluProject(0, 0, 0, mv, pj, vp, &sx, &sy, &sz);
+        int idx = rightSide ? 4 : 5;
+        controlPoints[idx].screenX = (float)sx;
+        controlPoints[idx].screenY = (float)(vp[3] - sy);
+        controlPoints[idx].visible = true;
+
+        glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+        glDisable(GL_LIGHTING);
+        glColor3f(1.0f, 1.0f, 0.0f);
+        glutSolidSphere(0.08, 12, 12);
+        glPopAttrib();
+    }
 
     glPushMatrix();
     glTranslatef(0.0f, -thigh.sy * 0.5f, 0.0f);
@@ -480,6 +569,25 @@ void Robot::drawHierarchicalLeg(bool rightSide, float hipSwing, float kneeBend) 
 
     glTranslatef(0.0f, -thigh.sy, 0.0f);
     glRotatef(kneeBend, 1.0f, 0.0f, 0.0f);
+
+    if (isEditMode) {
+        GLint vp[4]; glGetIntegerv(GL_VIEWPORT, vp);
+        GLdouble mv[16], pj[16];
+        glGetDoublev(GL_MODELVIEW_MATRIX, mv);
+        glGetDoublev(GL_PROJECTION_MATRIX, pj);
+        GLdouble sx, sy, sz;
+        gluProject(0, 0, 0, mv, pj, vp, &sx, &sy, &sz);
+        int idx = rightSide ? 6 : 7;
+        controlPoints[idx].screenX = (float)sx;
+        controlPoints[idx].screenY = (float)(vp[3] - sy);
+        controlPoints[idx].visible = true;
+
+        glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+        glDisable(GL_LIGHTING);
+        glColor3f(0.0f, 1.0f, 1.0f);
+        glutSolidSphere(0.08, 12, 12);
+        glPopAttrib();
+    }
 
     glPushMatrix();
     glTranslatef(0.0f, -shin.sy * 0.5f, 0.0f);
@@ -499,6 +607,15 @@ void Robot::drawHierarchicalHumanoid() {
     float bodyBob = fabs(sin(walkCycle)) * 0.035f;
     float wave = (greetingTimer > 0.0f) ? sin(greetingTimer * 15.0f) * 35.0f : 0.0f;
 
+    if (isEditMode) {
+        swing = 0;
+        rightKnee = 0;
+        leftKnee = 0;
+        bodyBob = 0;
+        wave = 0;
+        for (int i = 0; i < 8; i++) controlPoints[i].visible = false;
+    }
+
     glPushMatrix();
     glTranslatef(0.0f, bodyBob, 0.0f);
 
@@ -517,10 +634,10 @@ void Robot::drawHierarchicalHumanoid() {
     drawPrimitiveAtOrigin(humanoidParts[14]);
     glPopMatrix();
 
-    drawHierarchicalArm(true, -swing * 0.75f, wave);
-    drawHierarchicalArm(false, swing * 0.75f, 0.0f);
-    drawHierarchicalLeg(true, swing, rightKnee);
-    drawHierarchicalLeg(false, -swing, leftKnee);
+    drawHierarchicalArm(true, -swing * 0.75f, wave, shoulderRightAngle, elbowRightAngle);
+    drawHierarchicalArm(false, swing * 0.75f, 0.0f, shoulderLeftAngle, elbowLeftAngle);
+    drawHierarchicalLeg(true, swing, rightKnee, hipRightAngle, kneeRightAngle);
+    drawHierarchicalLeg(false, -swing, leftKnee, hipLeftAngle, kneeLeftAngle);
 
     for (int i = 15; i < 19; ++i) {
         glPushMatrix();
@@ -536,6 +653,10 @@ void Robot::drawHierarchicalHumanoid() {
 }
 
 void Robot::draw() {
+    glGetDoublev(GL_MODELVIEW_MATRIX, cachedModelView);
+    glGetDoublev(GL_PROJECTION_MATRIX, cachedProjection);
+    glGetIntegerv(GL_VIEWPORT, cachedViewport);
+
     glPushMatrix();
     glTranslatef(posX, posY, posZ);
     glRotatef(rotY, 0, 1, 0);
@@ -553,4 +674,77 @@ void Robot::draw() {
     drawShotEffect();
 
     glPopMatrix();
+}
+
+bool Robot::canEdit() const {
+    return targetForm == HUMANOID && currentForm == HUMANOID &&
+           transformFactor >= 1.0f && moveState == IDLE && greetingTimer <= 0.0f;
+}
+
+void Robot::toggleEditMode() {
+    if (!canEdit() && !isEditMode) return;
+    isEditMode = !isEditMode;
+    if (!isEditMode) {
+        shoulderRightAngle = shoulderLeftAngle = 0;
+        elbowRightAngle = elbowLeftAngle = 0;
+        hipRightAngle = hipLeftAngle = 0;
+        kneeRightAngle = kneeLeftAngle = 0;
+        for (int i = 0; i < 8; i++) controlPoints[i].visible = false;
+    } else {
+        greetingTimer = 0;
+    }
+    dragJointIndex = -1;
+    isDraggingJoint = false;
+}
+
+int Robot::hitTestControlPoint(int sx, int sy) const {
+    int closest = -1;
+    float minDist = 25.0f;
+    for (int i = 0; i < 8; i++) {
+        if (!controlPoints[i].visible) continue;
+        float dx = (float)sx - controlPoints[i].screenX;
+        float dy = (float)sy - controlPoints[i].screenY;
+        float dist = sqrt(dx * dx + dy * dy);
+        if (dist < minDist) {
+            minDist = dist;
+            closest = i;
+        }
+    }
+    return closest;
+}
+
+bool Robot::hitTestRobotBody(int sx, int sy) const {
+    GLdouble wx, wy, wz;
+    gluProject(posX, posY + 1.5, posZ, cachedModelView, cachedProjection, cachedViewport, &wx, &wy, &wz);
+    float cx = (float)wx;
+    float cy = (float)(cachedViewport[3] - wy);
+    float dx = (float)sx - cx;
+    float dy = (float)sy - cy;
+    return (dx * dx + dy * dy) < 60.0f * 60.0f;
+}
+
+void Robot::startDragJoint(int index) {
+    dragJointIndex = index;
+    isDraggingJoint = true;
+}
+
+void Robot::dragJoint(float dx) {
+    if (dragJointIndex < 0 || dragJointIndex > 7) return;
+    float angleDelta = dx * 0.5f;
+    float* angles[] = {
+        &shoulderRightAngle, &shoulderLeftAngle,
+        &elbowRightAngle, &elbowLeftAngle,
+        &hipRightAngle, &hipLeftAngle,
+        &kneeRightAngle, &kneeLeftAngle
+    };
+    *angles[dragJointIndex] += angleDelta;
+    float lo[] = { -180, -180, -150, -150, -120, -120, -50, -50 };
+    float hi[] = {  180,  180,   50,   50,  120,  120, 150, 150 };
+    if (*angles[dragJointIndex] < lo[dragJointIndex]) *angles[dragJointIndex] = lo[dragJointIndex];
+    if (*angles[dragJointIndex] > hi[dragJointIndex]) *angles[dragJointIndex] = hi[dragJointIndex];
+}
+
+void Robot::endDragJoint() {
+    dragJointIndex = -1;
+    isDraggingJoint = false;
 }
