@@ -29,6 +29,7 @@ public:
     bool isMoving;
     float transformFactor; // 0.0 to 1.0
     float greetingTimer; // timer for greeting animation
+    float shootingTimer; // timer for shooting visual effect
 
     Robot();
     void draw();
@@ -37,11 +38,21 @@ public:
     void turn(float angle);
     void moveForward(float distance);
     void greet(); // trigger greeting
+    void shoot(); // trigger shooting effect and sound
 
 private:
     void drawCube(float w, float h, float d);
     void drawCylinder(float radius, float h);
     void drawSphere(float r);
+    void drawPrimitiveAtOrigin(const PartTransform& t);
+    void drawLocalPart(const PartTransform& parent, int partIdx, RobotForm form, float extraRx = 0.0f, float extraRy = 0.0f, float extraRz = 0.0f);
+    void drawHierarchicalHumanoid();
+    void drawHierarchicalVehicle(RobotForm form);
+    void drawHierarchicalArm(bool rightSide, float shoulderSwing, float wave);
+    void drawHierarchicalLeg(bool rightSide, float hipSwing, float kneeBend);
+    void drawShotEffect();
+    void playGreetingSound();
+    void playShotSound();
 
     PartTransform getPartTransform(int partIdx, RobotForm form);
     void drawPart(int partIdx, float factor);

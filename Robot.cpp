@@ -1,6 +1,7 @@
 #include "Robot.h"
 #include <cmath>
 #include <iostream>
+#include <windows.h>
 
 const PartTransform humanoidParts[19] = {
 {0.000f, 2.121f, 0.000f, 0.000f, 0.000f, 0.000f, 1.000f, 0.805f, 0.606f, 0, 0.667f, 0.000f, 0.000f}, // 0: torso
@@ -90,7 +91,7 @@ const PartTransform planeParts[19] = {
 {-0.200f, 0.516f, 0.800f, 0.000f, 0.000f, -90.000f, 0.180f, 0.080f, 0.180f, 1, 0.000f, 0.000f, 0.000f}  // 18: rueda-tras-izq
 };
 
-Robot::Robot() : posX(0), posY(0), posZ(0), rotY(0), currentForm(HUMANOID), targetForm(HUMANOID), walkCycle(0), wheelRotation(0), isMoving(false), transformFactor(1.0f), greetingTimer(0.0f) {}
+Robot::Robot() : posX(0), posY(0), posZ(0), rotY(0), currentForm(HUMANOID), targetForm(HUMANOID), walkCycle(0), wheelRotation(0), isMoving(false), transformFactor(1.0f), greetingTimer(0.0f), shootingTimer(0.0f) {}
 
 void Robot::drawCube(float w, float h, float d) {
     glPushMatrix();
@@ -112,6 +113,37 @@ void Robot::drawCylinder(float r, float h) {
 
 void Robot::drawSphere(float r) {
     glutSolidSphere(r, 20, 20);
+}
+
+void Robot::playGreetingSound() {
+    Beep(660, 90);
+    Beep(880, 110);
+    Beep(740, 90);
+}
+
+void Robot::playShotSound() {
+    Beep(1200, 45);
+    Beep(420, 70);
+}
+
+void Robot::drawPrimitiveAtOrigin(const PartTransform& t) {
+    glColor3f(t.r, t.g, t.b);
+
+    if (t.shapeType == 0) {
+        drawCube(t.sx, t.sy, t.sz);
+    } else if (t.shapeType == 1) {
+        glPushMatrix();
+        glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+        glScalef(t.sx, t.sz, t.sy);
+        glTranslatef(0.0f, 0.0f, -0.5f);
+        drawCylinder(0.5f, 1.0f);
+        glPopMatrix();
+    } else if (t.shapeType == 2) {
+        glPushMatrix();
+        glScalef(t.sx, t.sy, t.sz);
+        drawSphere(0.5f);
+        glPopMatrix();
+    }
 }
 
 void Robot::setForm(RobotForm form) {
@@ -137,7 +169,13 @@ void Robot::moveForward(float distance) {
 void Robot::greet() {
     if (greetingTimer <= 0) {
         greetingTimer = 2.0f; // 2 seconds duration
+        playGreetingSound();
     }
+}
+
+void Robot::shoot() {
+    shootingTimer = 0.45f;
+    playShotSound();
 }
 
 void Robot::update(float deltaTime) {
@@ -151,9 +189,18 @@ void Robot::update(float deltaTime) {
         if (greetingTimer < 0) greetingTimer = 0;
     }
 
+    if (shootingTimer > 0) {
+        shootingTimer -= deltaTime;
+        if (shootingTimer < 0) shootingTimer = 0;
+    }
+
     if (isMoving) {
         if (targetForm == HUMANOID) {
             walkCycle += deltaTime * 20.0f;
+        } else {
+            wheelRotation += deltaTime * 420.0f;
+            if (wheelRotation > 360.0f) wheelRotation -= 360.0f;
+            walkCycle += deltaTime * 8.0f;
         }
     }
     isMoving = false;
@@ -268,15 +315,242 @@ void Robot::drawPart(int partIdx, float factor) {
     glPopMatrix();
 }
 
-void Robot::draw() {
+void Robot::drawLocalPart(const PartTransform& parent, int partIdx, RobotForm form, float extraRx, float extraRy, float extraRz) {
+    PartTransform t = getPartTransform(partIdx, form);
+
     glPushMatrix();
-    glTranslatef(posX, posY, posZ);
-    glRotatef(rotY, 0, 1, 0);
+    glTranslatef(t.tx - parent.tx, t.ty - parent.ty, t.tz - parent.tz);
+    glRotatef(t.ry + extraRy, 0, 1, 0);
+    glRotatef(t.rx + extraRx, 1, 0, 0);
+    glRotatef(t.rz + extraRz, 0, 0, 1);
+    drawPrimitiveAtOrigin(t);
+    glPopMatrix();
+}
+
+void Robot::drawHierarchicalArm(bool rightSide, float shoulderSwing, float wave) {
+    int upperIdx = rightSide ? 2 : 3;
+    int lowerIdx = rightSide ? 4 : 5;
+    int handIdx = rightSide ? 12 : 13;
+    const PartTransform upper = humanoidParts[upperIdx];
+    const PartTransform lower = humanoidParts[lowerIdx];
+    const PartTransform hand = humanoidParts[handIdx];
+
+    float side = rightSide ? 1.0f : -1.0f;
+    float shoulderX = side * 0.66f;
+    float shoulderY = 2.42f;
+    float elbowBend = rightSide ? -8.0f : 8.0f;
+
+    if (rightSide && greetingTimer > 0.0f) {
+        shoulderSwing = -120.0f;
+        elbowBend = -55.0f + wave;
+    }
+
+    glPushMatrix();
+    glTranslatef(shoulderX, shoulderY, 0.0f);
+    glRotatef(shoulderSwing, 1.0f, 0.0f, 0.0f);
+    glRotatef(side * 8.0f, 0.0f, 0.0f, 1.0f);
+
+    glPushMatrix();
+    glTranslatef(0.0f, -upper.sy * 0.5f, 0.0f);
+    drawPrimitiveAtOrigin(upper);
+    glPopMatrix();
+
+    glTranslatef(0.0f, -upper.sy, 0.0f);
+    glRotatef(elbowBend, 1.0f, 0.0f, 0.0f);
+
+    glPushMatrix();
+    glTranslatef(0.0f, -lower.sy * 0.5f, 0.0f);
+    drawPrimitiveAtOrigin(lower);
+    glPopMatrix();
+
+    glTranslatef(0.0f, -lower.sy - 0.08f, 0.0f);
+    drawPrimitiveAtOrigin(hand);
+    glPopMatrix();
+}
+
+void Robot::drawHierarchicalVehicle(RobotForm form) {
+    PartTransform root = getPartTransform(1, form); // cadera como nodo raiz del vehiculo
+    float bob = 0.0f;
+    float roll = 0.0f;
+    float pitch = 0.0f;
+
+    if (form == CAR) {
+        bob = fabs(sin(walkCycle)) * 0.025f;
+        pitch = sin(walkCycle * 0.7f) * 1.5f;
+    } else if (form == BOAT) {
+        bob = sin(walkCycle) * 0.06f;
+        roll = sin(walkCycle * 0.8f) * 3.5f;
+        pitch = cos(walkCycle * 0.6f) * 2.0f;
+    } else if (form == PLANE) {
+        bob = sin(walkCycle * 0.9f) * 0.05f;
+        roll = sin(walkCycle * 0.5f) * 4.0f;
+        pitch = 4.0f + cos(walkCycle * 0.4f) * 1.5f;
+    }
+
+    glPushMatrix();
+    glTranslatef(root.tx, root.ty + bob, root.tz);
+    glRotatef(root.ry, 0.0f, 1.0f, 0.0f);
+    glRotatef(root.rx + pitch, 1.0f, 0.0f, 0.0f);
+    glRotatef(root.rz + roll, 0.0f, 0.0f, 1.0f);
+
+    drawPrimitiveAtOrigin(root);
 
     for (int i = 0; i < 19; ++i) {
-        drawPart(i, transformFactor);
+        if (i == 1) continue;
+
+        float extraRx = 0.0f;
+        float extraRy = 0.0f;
+        float extraRz = 0.0f;
+
+        if (i >= 15 && i <= 18) {
+            extraRx = wheelRotation;
+        }
+
+        if (form == BOAT && (i == 4 || i == 5)) {
+            extraRy = sin(walkCycle * 2.0f) * 18.0f;
+        }
+
+        if (form == PLANE && (i == 2 || i == 3)) {
+            extraRz = sin(walkCycle * 1.5f) * 5.0f;
+        }
+
+        if (form == PLANE && (i == 12 || i == 13)) {
+            extraRx = wheelRotation * 2.0f;
+        }
+
+        drawLocalPart(root, i, form, extraRx, extraRy, extraRz);
     }
 
     glPopMatrix();
 }
 
+void Robot::drawShotEffect() {
+    if (shootingTimer <= 0.0f) return;
+
+    float progress = 1.0f - (shootingTimer / 0.45f);
+    float beamLength = 1.2f + progress * 3.0f;
+    float flashScale = 1.0f + sin(progress * 3.14159f) * 1.4f;
+
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+    glDisable(GL_LIGHTING);
+
+    glPushMatrix();
+    glTranslatef(0.0f, targetForm == HUMANOID ? 1.55f : 0.75f, 1.25f);
+
+    glColor3f(1.0f, 0.85f, 0.05f);
+    glPushMatrix();
+    glScalef(0.18f * flashScale, 0.18f * flashScale, 0.18f * flashScale);
+    glutSolidSphere(1.0f, 20, 20);
+    glPopMatrix();
+
+    glColor3f(1.0f, 0.15f, 0.05f);
+    glPushMatrix();
+    glTranslatef(0.0f, 0.0f, beamLength * 0.5f);
+    drawCylinder(0.045f, beamLength);
+    glPopMatrix();
+
+    glColor3f(1.0f, 0.95f, 0.25f);
+    glTranslatef(0.0f, 0.0f, beamLength);
+    glutSolidSphere(0.12f, 16, 16);
+
+    glPopMatrix();
+    glPopAttrib();
+}
+
+void Robot::drawHierarchicalLeg(bool rightSide, float hipSwing, float kneeBend) {
+    int thighIdx = rightSide ? 6 : 7;
+    int shinIdx = rightSide ? 8 : 9;
+    int footIdx = rightSide ? 10 : 11;
+    const PartTransform thigh = humanoidParts[thighIdx];
+    const PartTransform shin = humanoidParts[shinIdx];
+    const PartTransform foot = humanoidParts[footIdx];
+
+    float side = rightSide ? 1.0f : -1.0f;
+    float hipX = side * 0.245f;
+    float hipY = 1.31f;
+
+    glPushMatrix();
+    glTranslatef(hipX, hipY, 0.0f);
+    glRotatef(hipSwing, 1.0f, 0.0f, 0.0f);
+
+    glPushMatrix();
+    glTranslatef(0.0f, -thigh.sy * 0.5f, 0.0f);
+    drawPrimitiveAtOrigin(thigh);
+    glPopMatrix();
+
+    glTranslatef(0.0f, -thigh.sy, 0.0f);
+    glRotatef(kneeBend, 1.0f, 0.0f, 0.0f);
+
+    glPushMatrix();
+    glTranslatef(0.0f, -shin.sy * 0.5f, 0.0f);
+    drawPrimitiveAtOrigin(shin);
+    glPopMatrix();
+
+    glTranslatef(0.0f, -shin.sy - 0.02f, 0.08f);
+    glRotatef(-hipSwing * 0.35f, 1.0f, 0.0f, 0.0f);
+    drawPrimitiveAtOrigin(foot);
+    glPopMatrix();
+}
+
+void Robot::drawHierarchicalHumanoid() {
+    float swing = sin(walkCycle) * 28.0f;
+    float rightKnee = (swing < 0.0f) ? -swing * 1.35f : 4.0f;
+    float leftKnee = (swing > 0.0f) ? swing * 1.35f : 4.0f;
+    float bodyBob = fabs(sin(walkCycle)) * 0.035f;
+    float wave = (greetingTimer > 0.0f) ? sin(greetingTimer * 15.0f) * 35.0f : 0.0f;
+
+    glPushMatrix();
+    glTranslatef(0.0f, bodyBob, 0.0f);
+
+    glPushMatrix();
+    glTranslatef(humanoidParts[1].tx, humanoidParts[1].ty, humanoidParts[1].tz);
+    drawPrimitiveAtOrigin(humanoidParts[1]);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(humanoidParts[0].tx, humanoidParts[0].ty, humanoidParts[0].tz);
+    drawPrimitiveAtOrigin(humanoidParts[0]);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(humanoidParts[14].tx, humanoidParts[14].ty, humanoidParts[14].tz);
+    drawPrimitiveAtOrigin(humanoidParts[14]);
+    glPopMatrix();
+
+    drawHierarchicalArm(true, -swing * 0.75f, wave);
+    drawHierarchicalArm(false, swing * 0.75f, 0.0f);
+    drawHierarchicalLeg(true, swing, rightKnee);
+    drawHierarchicalLeg(false, -swing, leftKnee);
+
+    for (int i = 15; i < 19; ++i) {
+        glPushMatrix();
+        glTranslatef(humanoidParts[i].tx, humanoidParts[i].ty, humanoidParts[i].tz);
+        glRotatef(humanoidParts[i].ry, 0, 1, 0);
+        glRotatef(humanoidParts[i].rx, 1, 0, 0);
+        glRotatef(humanoidParts[i].rz, 0, 0, 1);
+        drawPrimitiveAtOrigin(humanoidParts[i]);
+        glPopMatrix();
+    }
+
+    glPopMatrix();
+}
+
+void Robot::draw() {
+    glPushMatrix();
+    glTranslatef(posX, posY, posZ);
+    glRotatef(rotY, 0, 1, 0);
+
+    if (targetForm == HUMANOID && currentForm == HUMANOID && transformFactor >= 1.0f) {
+        drawHierarchicalHumanoid();
+    } else if (targetForm != HUMANOID && currentForm == targetForm && transformFactor >= 1.0f) {
+        drawHierarchicalVehicle(targetForm);
+    } else {
+        for (int i = 0; i < 19; ++i) {
+            drawPart(i, transformFactor);
+        }
+    }
+
+    drawShotEffect();
+
+    glPopMatrix();
+}

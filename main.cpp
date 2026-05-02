@@ -75,6 +75,7 @@ void keyboard(unsigned char key, int x, int y) {
     case '3': robot.setForm(BOAT); break;
     case '4': robot.setForm(PLANE); break;
     case 'g': case 'G': robot.greet(); break;
+    case 't': case 'T': robot.shoot(); break;
     case 27: exit(0); break;
     }
 }
