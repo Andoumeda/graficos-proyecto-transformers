@@ -172,6 +172,7 @@ void keyboard(unsigned char key, int x, int y) {
     case 'g': case 'G': robot.greet(); break;
     case 't': case 'T': robot.shoot(); break;
     case 'c': case 'C': robot.changeColor(); break;
+    case 'v': case 'V': robot.clearColor(); break;
     case 27: exit(0); break;
     }
 }

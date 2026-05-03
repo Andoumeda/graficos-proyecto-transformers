@@ -1118,3 +1118,90 @@ void Robot::changeColor() {
         }
     }
 }
+
+void Robot::clearColor() {
+    if (currentForm == HUMANOID) {
+		// Restaurar colores originales del humanoide
+        // Cuerpo principal (Power Ranger style)
+        for (int i = 0; i < 19; ++i) {
+            if (i == 0 || i == 1) {
+                humanoidParts[i].r = 0.667f;
+                humanoidParts[i].g = 0.000f;
+                humanoidParts[i].b = 0.000f;
+            }
+            else if (i == 2 || i == 3 || i == 4 || i == 5 || i == 6 || i == 7 || i == 8 || i == 9) {
+                humanoidParts[i].r = 0.000f;
+                humanoidParts[i].g = 0.667f;
+                humanoidParts[i].b = 0.000f;
+            }
+            else if (i == 10 || i == 11) {
+                humanoidParts[i].r = 0.000f;
+                humanoidParts[i].g = 0.000f;
+                humanoidParts[i].b = 0.667f;
+            }
+            else if (i == 14) {
+				humanoidParts[i].r = 0.800f;
+				humanoidParts[i].g = 0.800f;
+				humanoidParts[i].b = 0.800f;
+            }
+        }
+    }
+    else if (currentForm == CAR) {
+        for (int i = 0; i < 19; ++i) {
+            if (i == 0 || i == 1) {
+                carParts[i].r = 0.667f;
+                carParts[i].g = 0.000f;
+                carParts[i].b = 0.000f;
+            }
+            else if (i == 2 || i == 3 || i == 4 || i == 5 || i == 6 || i == 7 || i == 8 || i == 9) {
+                carParts[i].r = 0.000f;
+                carParts[i].g = 0.667f;
+                carParts[i].b = 0.000f;
+            }
+            else if (i == 10 || i == 11) {
+                carParts[i].r = 0.000f;
+                carParts[i].g = 0.000f;
+                carParts[i].b = 0.667f;
+            }
+        }
+        
+    }
+    else if (currentForm == BOAT) {
+        for (int i = 0; i < 19; ++i) {
+            if (i == 0 || i == 1) {
+                boatParts[i].r = 0.667f;
+                boatParts[i].g = 0.000f;
+                boatParts[i].b = 0.000f;
+            }
+            else if (i == 2 || i == 3 || i == 4 || i == 5 || i == 6 || i == 7 || i == 8 || i == 9) {
+                boatParts[i].r = 0.000f;
+                boatParts[i].g = 0.667f;
+                boatParts[i].b = 0.000f;
+            }
+            else if (i == 10 || i == 11) {
+                boatParts[i].r = 0.000f;
+                boatParts[i].g = 0.000f;
+                boatParts[i].b = 0.667f;
+            }
+        }
+    }
+	else if (currentForm == PLANE) {
+        for (int i = 0; i < 19; ++i) {
+            if (i == 0 || i == 1 || i == 9) {
+                planeParts[i].r = 0.667f;
+                planeParts[i].g = 0.000f;
+                planeParts[i].b = 0.000f;
+            }
+            else if (i == 2 || i == 3 || i == 4 || i == 5 || i == 6 || i == 7 || i == 8) {
+                planeParts[i].r = 0.000f;
+                planeParts[i].g = 0.667f;
+                planeParts[i].b = 0.000f;
+            }
+            else if (i == 10 || i == 11) {
+                planeParts[i].r = 0.000f;
+                planeParts[i].g = 0.000f;
+                planeParts[i].b = 0.667f;
+            }
+        }
+    }
+}

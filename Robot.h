@@ -85,6 +85,7 @@ public:
     void getSelectedPartColor(float& r, float& g, float& b) const;
     void getSelectedPartPosition(float& x, float& y, float& z) const;
     void changeColor();
+    void clearColor();
 
 private:
     void drawCube(float w, float h, float d);
