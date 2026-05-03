@@ -164,6 +164,15 @@ void Robot::applyPartVisualState(PartTransform& t, int partIdx) const {
         t.g = (t.g + 0.9f) * 0.5f;
         t.b = (t.b + 0.2f) * 0.5f;
     }
+
+    if (greetingTimer > 0.0f && (partIdx == 12 || partIdx == 13)) {
+        int blink = (int)(greetingTimer * 6.0f) % 2;
+        if (blink == 0) {
+            t.r = 1.0f;
+            t.g = 0.95f;
+            t.b = 0.15f;
+        }
+    }
 }
 
 void Robot::drawPrimitiveAtOrigin(const PartTransform& t) {
@@ -279,7 +288,6 @@ PartTransform Robot::getPartTransform(int partIdx, RobotForm form) {
     else if (form == CAR) t = carParts[partIdx];
     else if (form == BOAT) t = boatParts[partIdx];
     else {
-        // invierte z para que el frente del avion apunte en +Z
         t = planeParts[partIdx];
         t.tz = -t.tz;
     }
@@ -422,7 +430,7 @@ void Robot::drawHierarchicalArm(bool rightSide, float shoulderSwing, float wave,
     int handIdx = rightSide ? 12 : 13;
     const PartTransform upper = getPartTransform(upperIdx, HUMANOID);
     const PartTransform lower = getPartTransform(lowerIdx, HUMANOID);
-    const PartTransform hand = getPartTransform(handIdx, HUMANOID);
+    PartTransform hand = getPartTransform(handIdx, HUMANOID);
 
     float side = rightSide ? 1.0f : -1.0f;
     float shoulderX = side * 0.66f;
@@ -494,6 +502,19 @@ void Robot::drawHierarchicalArm(bool rightSide, float shoulderSwing, float wave,
     glPopMatrix();
 
     glTranslatef(0.0f, -lower.sy - 0.08f, 0.0f);
+
+    if (greetingTimer > 0.0f) {
+        int blink = (int)(greetingTimer * 6.0f) % 2;
+        if (blink == 0) {
+            hand.r = 1.0f;
+            hand.g = 0.95f;
+            hand.b = 0.15f;
+            hand.sx *= 1.25f;
+            hand.sy *= 1.25f;
+            hand.sz *= 1.25f;
+        }
+    }
+
     drawPrimitiveAtOrigin(hand);
     glPopMatrix();
 }
@@ -598,6 +619,7 @@ void Robot::drawShotEffect() {
     glPopMatrix();
     glPopAttrib();
 }
+
 
 void Robot::drawHierarchicalLeg(bool rightSide, float hipSwing, float kneeBend, float userHipAngle, float userKneeAngle) {
     int thighIdx = rightSide ? 6 : 7;
@@ -742,6 +764,26 @@ void Robot::draw() {
     glPushMatrix();
     glTranslatef(posX, posY, posZ);
     glRotatef(rotY, 0, 1, 0);
+
+    glDisable(GL_LIGHT1);
+    if (shootingTimer > 0.0f) {
+        float progress = 1.0f - (shootingTimer / 0.45f);
+        float pulse = 0.6f + 0.4f * sin(progress * 3.14159f);
+
+        GLfloat lightPos[] = { 0.0f, targetForm == HUMANOID ? 1.55f : 0.75f, 1.25f, 1.0f };
+        GLfloat diffuse[] = { 1.0f * pulse, 0.75f * pulse, 0.25f * pulse, 1.0f };
+        GLfloat ambient[] = { 0.15f * pulse, 0.08f * pulse, 0.02f * pulse, 1.0f };
+        GLfloat specular[] = { 0.9f * pulse, 0.9f * pulse, 0.6f * pulse, 1.0f };
+
+        glEnable(GL_LIGHT1);
+        glLightfv(GL_LIGHT1, GL_POSITION, lightPos);
+        glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse);
+        glLightfv(GL_LIGHT1, GL_AMBIENT, ambient);
+        glLightfv(GL_LIGHT1, GL_SPECULAR, specular);
+        glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 1.0f);
+        glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.7f);
+        glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 0.4f);
+    }
 
     if (targetForm == HUMANOID && currentForm == HUMANOID && transformFactor >= 1.0f) {
         drawHierarchicalHumanoid();

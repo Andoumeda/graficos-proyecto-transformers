@@ -19,7 +19,7 @@ struct PartTransform {
     float rx, ry, rz;
     float sx, sy, sz;
     int shapeType; // 0: prisma, 1: cilindro, 2: esfera
-    float r, g, b; // color
+    float r, g, b;
 };
 
 struct ColorPreset {
@@ -36,14 +36,14 @@ public:
     float walkCycle;
     float wheelRotation;
     bool isMoving;
-    float transformFactor; // 0.0 a 1.0
+    float transformFactor;
     MoveState moveState;
     float greetingTimer; // duracion del saludo
     float shootingTimer; // duracion del disparo
     float propellerAngle; // angulo de la helice en modo avion
     bool isDraggingPropeller; // true si el usuario arrastra la helice
-    float doorAngle; // angulo de apertura de las puertas en modo auto/camion
-    bool isDraggingDoor; // true si el usuario arrastra las puertas
+    float doorAngle;
+    bool isDraggingDoor;
 
     bool isEditMode;
     float shoulderRightAngle, shoulderLeftAngle;
@@ -68,8 +68,8 @@ public:
     void moveForward(float distance);
     void toggleForward();
     void toggleBackward();
-    void greet(); // inicia animacion de saludo
-    void shoot(); // disparo
+    void greet();
+    void shoot();
     bool canEdit() const;
     void toggleEditMode();
     int hitTestControlPoint(int sx, int sy) const;
