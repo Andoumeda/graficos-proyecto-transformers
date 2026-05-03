@@ -53,7 +53,7 @@ static void getShotOriginAndDirection(RobotForm form, float& ox, float& oy, floa
     }
 }
 
-const PartTransform humanoidParts[19] = {
+PartTransform humanoidParts[19] = {
 {0.000f, 2.121f, 0.000f, 0.000f, 0.000f, 0.000f, 1.000f, 0.805f, 0.606f, 0, 0.667f, 0.000f, 0.000f}, // 0: torso
 {0.000f, 1.537f, 0.000f, 0.000f, 0.000f, 0.000f, 0.800f, 0.408f, 0.512f, 0, 0.667f, 0.000f, 0.000f}, // 1: cadera
 {0.663f, 2.134f, 0.000f, 0.000f, 0.000f, 0.000f, 0.170f, 0.604f, 0.174f, 1, 0.000f, 0.667f, 0.000f}, // 2: brazo-der
@@ -75,7 +75,7 @@ const PartTransform humanoidParts[19] = {
 {-0.526f, 2.471f, 0.000f, 90.000f, -90.000f, 0.000f, 0.401f, 0.097f, 0.400f, 1, 0.000f, 0.000f, 0.000f}  // 18: rueda-tras-izq
 };
 
-const PartTransform carParts[19] = {
+PartTransform carParts[19] = {
 {0.000f, 0.744f, 0.555f, 0.000f, 0.000f, 0.000f, 1.000f, 0.805f, 0.606f, 0, 0.667f, 0.000f, 0.000f}, // 0: torso
 {0.000f, 0.545f, 1.126f, 0.000f, 0.000f, 0.000f, 0.800f, 0.408f, 0.512f, 0, 0.667f, 0.000f, 0.000f}, // 1: cadera
 {0.456f, 1.098f, 0.234f, 0.000f, 0.000f, 0.000f, 0.129f, 1.020f, 0.131f, 1, 0.000f, 0.667f, 0.000f}, // 2: brazo-der
@@ -97,7 +97,7 @@ const PartTransform carParts[19] = {
 {-0.459f, 0.218f, -0.529f, 0.000f, 0.000f, -90.000f, 0.401f, 0.097f, 0.400f, 1, 0.000f, 0.000f, 0.000f}  // 18: rueda-tras-izq
 };
 
-const PartTransform boatParts[19] = {
+PartTransform boatParts[19] = {
 {0.003f, 0.248f, -0.158f, 0.000f, 0.000f, 0.000f, 0.902f, 0.346f, 1.537f, 0, 0.667f, 0.000f, 0.000f}, // 0: torso
 {0.000f, 0.545f, 0.903f, 0.000f, 0.000f, 0.000f, 0.600f, 0.354f, 0.802f, 0, 0.667f, 0.000f, 0.000f}, // 1: cadera
 {0.001f, 1.008f, -0.204f, 0.000f, 0.000f, 0.000f, 0.123f, 1.195f, 0.115f, 1, 0.000f, 0.667f, 0.000f}, // 2: brazo-der
@@ -119,7 +119,7 @@ const PartTransform boatParts[19] = {
 {-0.521f, 0.658f, -0.557f, 0.000f, 0.000f, -90.000f, 0.401f, 0.097f, 0.400f, 1, 0.000f, 0.000f, 0.000f}  // 18: rueda-tras-izq
 };
 
-const PartTransform planeParts[19] = {
+PartTransform planeParts[19] = {
 {0.000f, 0.800f, 0.000f, 90.000f, 0.000f, 0.000f, 0.450f, 2.200f, 0.450f, 0, 0.667f, 0.000f, 0.000f}, // 0: torso
 {0.000f, 0.800f, 0.037f, 0.000f, 0.000f, 0.000f, 0.500f, 0.350f, 1.800f, 0, 0.667f, 0.000f, 0.000f}, // 1: cadera
 {0.846f, 0.789f, -0.313f, 177.000f, -1.000f, 90.000f, -0.125f, 1.291f, 0.565f, 1, 0.000f, 0.667f, 0.000f}, // 2: brazo-der
@@ -995,4 +995,126 @@ void Robot::getSelectedPartPosition(float& x, float& y, float& z) const {
     x = posX + t.tx;
     y = posY + t.ty;
     z = posZ + t.tz;
+}
+
+void Robot::changeColor() {
+    // Semilla aleatoria
+    static bool seeded = false;
+    if (!seeded) {
+        srand(static_cast<unsigned>(time(nullptr)));
+        seeded = true;
+    }
+
+    float red = 0.2f + static_cast<float>(rand()) / RAND_MAX * 0.8f;  // Rojo dominante
+    float green = 0.1f + static_cast<float>(rand()) / RAND_MAX * 0.7f;
+    float blue  = 0.1f + static_cast<float>(rand()) / RAND_MAX * 0.8f;
+
+    float accentR = 0.9f + static_cast<float>(rand()) / RAND_MAX * 0.1f;
+    float accentG = 0.9f + static_cast<float>(rand()) / RAND_MAX * 0.1f;
+    float accentB = 0.9f + static_cast<float>(rand()) / RAND_MAX * 0.1f;
+
+    // === HUMANOID ===
+    if (currentForm == HUMANOID) {
+        // Cuerpo principal
+        for (int i : {0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14}) {  // torso, brazos, piernas, pies, cabeza
+            humanoidParts[i].r = red;
+            humanoidParts[i].g = green;
+            humanoidParts[i].b = blue;
+        }
+
+        // Cadera / cinturón (negro o gris oscuro)
+        humanoidParts[1].r = 0.12f;
+        humanoidParts[1].g = 0.12f;
+        humanoidParts[1].b = 0.12f;
+
+        // Manos (blanco o plateado)
+        humanoidParts[12].r = accentR;
+        humanoidParts[12].g = accentG;
+        humanoidParts[12].b = accentB;
+        humanoidParts[13].r = accentR;
+        humanoidParts[13].g = accentG;
+        humanoidParts[13].b = accentB;
+
+        // Ruedas (oscuro)
+        for (int i = 15; i <= 18; ++i) {
+            humanoidParts[i].r = 0.1f;
+            humanoidParts[i].g = 0.1f;
+            humanoidParts[i].b = 0.1f;
+        }
+    }
+
+    // === CAR ===
+    else if (currentForm == CAR) {
+        float carR = 0.1f + static_cast<float>(rand()) / RAND_MAX;
+        float carG = 0.1f + static_cast<float>(rand()) / RAND_MAX * 0.4f;
+        float carB = 0.7f + static_cast<float>(rand()) / RAND_MAX * 0.3f;
+
+        for (int i = 0; i < 19; ++i) {
+            if (i == 0 || i == 1) {
+                carParts[i].r = carR;
+                carParts[i].g = carG;
+                carParts[i].b = carB;
+            }
+            else if (i == 2 || i == 3 || i == 4 || i == 5 || i == 6 || i == 7 || i == 8 || i == 9) {
+                carParts[i].r = carB;
+                carParts[i].g = carR;
+                carParts[i].b = carG;
+            }
+            else if (i == 10 || i == 11){
+                carParts[i].r = carG;
+                carParts[i].g = carB;
+                carParts[i].b = carR;
+            }
+        }
+    }
+
+    // === BOAT ===
+    else if (currentForm == BOAT) {
+        float boatR = static_cast<float>(rand()) / RAND_MAX * 0.4f;
+        float boatG = static_cast<float>(rand()) / RAND_MAX * 0.3f;
+        float boatB = static_cast<float>(rand()) / RAND_MAX * 0.3f;
+
+        for (int i = 0; i < 19; ++i) {
+            if (i == 0 || i == 1) {
+                boatParts[i].r = boatR;
+				boatParts[i].g = boatG;
+				boatParts[i].b = boatB;
+            }
+            else if (i == 2 || i == 3 || i == 4 || i == 5 || i == 6 || i == 7 || i == 8 || i == 9) {
+                boatParts[i].r = boatB;
+                boatParts[i].g = boatR;
+                boatParts[i].b = boatG;
+            }
+            else if (i == 10 || i == 11) {
+                boatParts[i].r = boatG;
+                boatParts[i].g = boatB;
+                boatParts[i].b = boatR;
+            }
+        }
+    }
+
+    // === PLANE ===
+    else if (currentForm == PLANE) {
+        float planeR = static_cast<float>(rand()) / RAND_MAX * 0.3f;
+        float planeG = static_cast<float>(rand()) / RAND_MAX * 0.3f;
+        float planeB = static_cast<float>(rand()) / RAND_MAX * 0.4f;
+
+        for (int i = 0; i < 19; ++i) {
+            if (i == 0 || i == 1 || i == 9) {
+                planeParts[i].r = planeR;
+				planeParts[i].g = planeG;
+				planeParts[i].b = planeB;
+            }
+            else if (i == 10 || i == 11) {
+                planeParts[i].r = planeB;
+                planeParts[i].g = planeR;
+                planeParts[i].b = planeG;
+            }
+            else if (i == 2 || i == 3 || i == 4 || i == 5 || i == 6 || i == 7 || i == 8) {
+                planeParts[i].r = planeG;
+                planeParts[i].g = planeB;
+                planeParts[i].b = planeR;
+            }
+        }
+    }
 }
