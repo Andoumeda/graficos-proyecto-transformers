@@ -3,6 +3,22 @@
 #include <iostream>
 #include <windows.h>
 
+const char* partNames[19] = {
+    "Torso", "Cadera", "Brazo Der", "Brazo Izq", "Antebrazo Der",
+    "Antebrazo Izq", "Muslo Der", "Muslo Izq", "Pierna Der", "Pierna Izq",
+    "Pie Der", "Pie Izq", "Mano Der", "Mano Izq", "Cabeza",
+    "Rueda Del Izq", "Rueda Del Der", "Rueda Tras Der", "Rueda Tras Izq"
+};
+
+const ColorPreset colorPresets[6] = {
+    {0.85f, 0.10f, 0.10f},
+    {0.10f, 0.65f, 0.20f},
+    {0.10f, 0.35f, 0.90f},
+    {0.95f, 0.85f, 0.10f},
+    {0.95f, 0.95f, 0.95f},
+    {0.20f, 0.20f, 0.20f}
+};
+
 const PartTransform humanoidParts[19] = {
 {0.000f, 2.121f, 0.000f, 0.000f, 0.000f, 0.000f, 1.000f, 0.805f, 0.606f, 0, 0.667f, 0.000f, 0.000f}, // 0: torso
 {0.000f, 1.537f, 0.000f, 0.000f, 0.000f, 0.000f, 0.800f, 0.408f, 0.512f, 0, 0.667f, 0.000f, 0.000f}, // 1: cadera
@@ -91,8 +107,12 @@ const PartTransform planeParts[19] = {
 {-0.200f, 0.516f, 0.800f, 0.000f, 0.000f, -90.000f, 0.180f, 0.080f, 0.180f, 1, 0.000f, 0.000f, 0.000f}  // 18: rueda-tras-izq
 };
 
-Robot::Robot() : posX(0), posY(0), posZ(0), rotY(0), currentForm(HUMANOID), targetForm(HUMANOID), walkCycle(0), wheelRotation(0), isMoving(false), transformFactor(1.0f), greetingTimer(0.0f), shootingTimer(0.0f), propellerAngle(0.0f), isDraggingPropeller(false), moveState(IDLE), isEditMode(false), shoulderRightAngle(0), shoulderLeftAngle(0), elbowRightAngle(0), elbowLeftAngle(0), hipRightAngle(0), hipLeftAngle(0), kneeRightAngle(0), kneeLeftAngle(0), dragJointIndex(-1), isDraggingJoint(false) {
+Robot::Robot() : posX(0), posY(0), posZ(0), rotY(0), currentForm(HUMANOID), targetForm(HUMANOID), walkCycle(0), wheelRotation(0), isMoving(false), transformFactor(1.0f), greetingTimer(0.0f), shootingTimer(0.0f), propellerAngle(0.0f), isDraggingPropeller(false), moveState(IDLE), isEditMode(false), shoulderRightAngle(0), shoulderLeftAngle(0), elbowRightAngle(0), elbowLeftAngle(0), hipRightAngle(0), hipLeftAngle(0), kneeRightAngle(0), kneeLeftAngle(0), dragJointIndex(-1), isDraggingJoint(false), selectedPartIndex(0) {
     for (int i = 0; i < 8; i++) controlPoints[i].visible = false;
+    for (int i = 0; i < 19; i++) {
+        hasCustomColor[i] = false;
+        customColors[i] = { 0.0f, 0.0f, 0.0f };
+    }
 }
 
 void Robot::drawCube(float w, float h, float d) {
@@ -126,6 +146,24 @@ void Robot::playGreetingSound() {
 void Robot::playShotSound() {
     Beep(1200, 45);
     Beep(420, 70);
+}
+
+bool Robot::isPartSelected(int partIdx) const {
+    return selectedPartIndex == partIdx;
+}
+
+void Robot::applyPartVisualState(PartTransform& t, int partIdx) const {
+    if (hasCustomColor[partIdx]) {
+        t.r = customColors[partIdx].r;
+        t.g = customColors[partIdx].g;
+        t.b = customColors[partIdx].b;
+    }
+
+    if (isPartSelected(partIdx)) {
+        t.r = (t.r + 1.0f) * 0.5f;
+        t.g = (t.g + 0.9f) * 0.5f;
+        t.b = (t.b + 0.2f) * 0.5f;
+    }
 }
 
 void Robot::drawPrimitiveAtOrigin(const PartTransform& t) {
@@ -236,13 +274,16 @@ void Robot::update(float deltaTime) {
 }
 
 PartTransform Robot::getPartTransform(int partIdx, RobotForm form) {
-    if (form == HUMANOID) return humanoidParts[partIdx];
-    if (form == CAR) return carParts[partIdx];
-    if (form == BOAT) return boatParts[partIdx];
-    
-    // invierte z para que el frente del avion apunte en +Z
-    PartTransform t = planeParts[partIdx];
-    t.tz = -t.tz;
+    PartTransform t;
+    if (form == HUMANOID) t = humanoidParts[partIdx];
+    else if (form == CAR) t = carParts[partIdx];
+    else if (form == BOAT) t = boatParts[partIdx];
+    else {
+        // invierte z para que el frente del avion apunte en +Z
+        t = planeParts[partIdx];
+        t.tz = -t.tz;
+    }
+    applyPartVisualState(t, partIdx);
     return t;
 }
 
@@ -257,7 +298,7 @@ float lerpAngle(float a, float b, float f) {
     return a + f * diff;
 }
 
-PartTransform Robot::interpolateTransform(const PartTransform& t1, const PartTransform& t2, float factor) {
+PartTransform Robot::interpolateTransform(const PartTransform& t1, const PartTransform& t2, float factor) const {
     PartTransform res;
     res.tx = lerp(t1.tx, t2.tx, factor);
     res.ty = lerp(t1.ty, t2.ty, factor);
@@ -352,9 +393,9 @@ void Robot::drawHierarchicalArm(bool rightSide, float shoulderSwing, float wave,
     int upperIdx = rightSide ? 2 : 3;
     int lowerIdx = rightSide ? 4 : 5;
     int handIdx = rightSide ? 12 : 13;
-    const PartTransform upper = humanoidParts[upperIdx];
-    const PartTransform lower = humanoidParts[lowerIdx];
-    const PartTransform hand = humanoidParts[handIdx];
+    const PartTransform upper = getPartTransform(upperIdx, HUMANOID);
+    const PartTransform lower = getPartTransform(lowerIdx, HUMANOID);
+    const PartTransform hand = getPartTransform(handIdx, HUMANOID);
 
     float side = rightSide ? 1.0f : -1.0f;
     float shoulderX = side * 0.66f;
@@ -529,9 +570,9 @@ void Robot::drawHierarchicalLeg(bool rightSide, float hipSwing, float kneeBend, 
     int thighIdx = rightSide ? 6 : 7;
     int shinIdx = rightSide ? 8 : 9;
     int footIdx = rightSide ? 10 : 11;
-    const PartTransform thigh = humanoidParts[thighIdx];
-    const PartTransform shin = humanoidParts[shinIdx];
-    const PartTransform foot = humanoidParts[footIdx];
+    const PartTransform thigh = getPartTransform(thighIdx, HUMANOID);
+    const PartTransform shin = getPartTransform(shinIdx, HUMANOID);
+    const PartTransform foot = getPartTransform(footIdx, HUMANOID);
 
     float side = rightSide ? 1.0f : -1.0f;
     float hipX = side * 0.245f;
@@ -604,6 +645,10 @@ void Robot::drawHierarchicalLeg(bool rightSide, float hipSwing, float kneeBend, 
 }
 
 void Robot::drawHierarchicalHumanoid() {
+    const PartTransform pelvis = getPartTransform(1, HUMANOID);
+    const PartTransform torso = getPartTransform(0, HUMANOID);
+    const PartTransform head = getPartTransform(14, HUMANOID);
+
     float swing = sin(walkCycle) * 28.0f;
     float rightKnee = (swing < 0.0f) ? -swing * 1.35f : 4.0f;
     float leftKnee = (swing > 0.0f) ? swing * 1.35f : 4.0f;
@@ -623,18 +668,18 @@ void Robot::drawHierarchicalHumanoid() {
     glTranslatef(0.0f, bodyBob, 0.0f);
 
     glPushMatrix();
-    glTranslatef(humanoidParts[1].tx, humanoidParts[1].ty, humanoidParts[1].tz);
-    drawPrimitiveAtOrigin(humanoidParts[1]);
+    glTranslatef(pelvis.tx, pelvis.ty, pelvis.tz);
+    drawPrimitiveAtOrigin(pelvis);
     glPopMatrix();
 
     glPushMatrix();
-    glTranslatef(humanoidParts[0].tx, humanoidParts[0].ty, humanoidParts[0].tz);
-    drawPrimitiveAtOrigin(humanoidParts[0]);
+    glTranslatef(torso.tx, torso.ty, torso.tz);
+    drawPrimitiveAtOrigin(torso);
     glPopMatrix();
 
     glPushMatrix();
-    glTranslatef(humanoidParts[14].tx, humanoidParts[14].ty, humanoidParts[14].tz);
-    drawPrimitiveAtOrigin(humanoidParts[14]);
+    glTranslatef(head.tx, head.ty, head.tz);
+    drawPrimitiveAtOrigin(head);
     glPopMatrix();
 
     drawHierarchicalArm(true, -swing * 0.75f, wave, shoulderRightAngle, elbowRightAngle);
@@ -643,12 +688,13 @@ void Robot::drawHierarchicalHumanoid() {
     drawHierarchicalLeg(false, -swing, leftKnee, hipLeftAngle, kneeLeftAngle);
 
     for (int i = 15; i < 19; ++i) {
+        PartTransform wheel = getPartTransform(i, HUMANOID);
         glPushMatrix();
-        glTranslatef(humanoidParts[i].tx, humanoidParts[i].ty, humanoidParts[i].tz);
-        glRotatef(humanoidParts[i].ry, 0, 1, 0);
-        glRotatef(humanoidParts[i].rx, 1, 0, 0);
-        glRotatef(humanoidParts[i].rz, 0, 0, 1);
-        drawPrimitiveAtOrigin(humanoidParts[i]);
+        glTranslatef(wheel.tx, wheel.ty, wheel.tz);
+        glRotatef(wheel.ry, 0, 1, 0);
+        glRotatef(wheel.rx, 1, 0, 0);
+        glRotatef(wheel.rz, 0, 0, 1);
+        drawPrimitiveAtOrigin(wheel);
         glPopMatrix();
     }
 
@@ -750,4 +796,73 @@ void Robot::dragJoint(float dx) {
 void Robot::endDragJoint() {
     dragJointIndex = -1;
     isDraggingJoint = false;
+}
+
+void Robot::selectNextPart() {
+    selectedPartIndex = (selectedPartIndex + 1) % 19;
+}
+
+void Robot::selectPreviousPart() {
+    selectedPartIndex = (selectedPartIndex + 18) % 19;
+}
+
+void Robot::applySelectedColorPreset(int presetIndex) {
+    if (presetIndex < 0 || presetIndex >= 6) return;
+    hasCustomColor[selectedPartIndex] = true;
+    customColors[selectedPartIndex] = colorPresets[presetIndex];
+}
+
+const char* Robot::getModeName() const {
+    if (transformFactor < 1.0f) return "Transformando";
+    switch (targetForm) {
+    case HUMANOID: return isEditMode ? "Robot Editando" : "Robot";
+    case CAR: return "Auto/Camion";
+    case BOAT: return "Barco";
+    case PLANE: return "Avion";
+    default: return "Desconocido";
+    }
+}
+
+const char* Robot::getSelectedPartName() const {
+    return partNames[selectedPartIndex];
+}
+
+void Robot::getSelectedPartColor(float& r, float& g, float& b) const {
+    PartTransform t;
+    if (targetForm == HUMANOID) t = humanoidParts[selectedPartIndex];
+    else if (targetForm == CAR) t = carParts[selectedPartIndex];
+    else if (targetForm == BOAT) t = boatParts[selectedPartIndex];
+    else {
+        t = planeParts[selectedPartIndex];
+    }
+
+    r = hasCustomColor[selectedPartIndex] ? customColors[selectedPartIndex].r : t.r;
+    g = hasCustomColor[selectedPartIndex] ? customColors[selectedPartIndex].g : t.g;
+    b = hasCustomColor[selectedPartIndex] ? customColors[selectedPartIndex].b : t.b;
+}
+
+void Robot::getSelectedPartPosition(float& x, float& y, float& z) const {
+    PartTransform curr;
+    PartTransform target;
+
+    if (currentForm == HUMANOID) curr = humanoidParts[selectedPartIndex];
+    else if (currentForm == CAR) curr = carParts[selectedPartIndex];
+    else if (currentForm == BOAT) curr = boatParts[selectedPartIndex];
+    else {
+        curr = planeParts[selectedPartIndex];
+        curr.tz = -curr.tz;
+    }
+
+    if (targetForm == HUMANOID) target = humanoidParts[selectedPartIndex];
+    else if (targetForm == CAR) target = carParts[selectedPartIndex];
+    else if (targetForm == BOAT) target = boatParts[selectedPartIndex];
+    else {
+        target = planeParts[selectedPartIndex];
+        target.tz = -target.tz;
+    }
+
+    PartTransform t = interpolateTransform(curr, target, transformFactor);
+    x = posX + t.tx;
+    y = posY + t.ty;
+    z = posZ + t.tz;
 }

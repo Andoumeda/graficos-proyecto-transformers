@@ -4,14 +4,86 @@
 #include "Camera.h"
 #include <iostream>
 #include <cstdlib>
+#include <sstream>
+#include <iomanip>
+#include <string>
 
 Robot robot;
 Camera camera;
 int lastMouseX, lastMouseY;
 bool isDragging = false;
 bool isZooming = false;
+int windowWidth = 800;
+int windowHeight = 600;
 
 bool keys[256];
+
+void drawBitmapText(float x, float y, void* font, const std::string& text) {
+    glRasterPos2f(x, y);
+    for (char c : text) glutBitmapCharacter(font, c);
+}
+
+void drawOverlay() {
+    float partX, partY, partZ;
+    float colorR, colorG, colorB;
+    robot.getSelectedPartPosition(partX, partY, partZ);
+    robot.getSelectedPartColor(colorR, colorG, colorB);
+
+    std::ostringstream posStream;
+    posStream << std::fixed << std::setprecision(2)
+        << "Coords robot=(" << robot.posX << ", " << robot.posY << ", " << robot.posZ
+        << ") pieza=(" << partX << ", " << partY << ", " << partZ << ")";
+
+    std::ostringstream colorStream;
+    colorStream << std::fixed << std::setprecision(2)
+        << "Color seleccionado RGB=(" << colorR << ", " << colorG << ", " << colorB << ")";
+
+    std::string modeLine = std::string("Modo: ") + robot.getModeName() +
+        " | Pieza: " + robot.getSelectedPartName();
+    std::string controls1 = "Controles: 1 Robot | 2 Auto/Camion | 3 Barco | 4 Avion | W/S mover | A/D girar | G saludar | T disparar";
+    std::string controls2 = "Seleccion: Q anterior | E siguiente | Colores: 5 Rojo | 6 Verde | 7 Azul | 8 Amarillo | 9 Blanco | 0 Negro";
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    gluOrtho2D(0, windowWidth, 0, windowHeight);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_DEPTH_TEST);
+
+    glColor3f(0.08f, 0.08f, 0.08f);
+    glBegin(GL_QUADS);
+    glVertex2f(0.0f, (float)windowHeight);
+    glVertex2f((float)windowWidth, (float)windowHeight);
+    glVertex2f((float)windowWidth, (float)windowHeight - 96.0f);
+    glVertex2f(0.0f, (float)windowHeight - 96.0f);
+    glEnd();
+
+    glColor3f(0.95f, 0.95f, 0.95f);
+    drawBitmapText(12.0f, (float)windowHeight - 22.0f, GLUT_BITMAP_HELVETICA_18, modeLine);
+    drawBitmapText(12.0f, (float)windowHeight - 42.0f, GLUT_BITMAP_HELVETICA_12, posStream.str());
+    drawBitmapText(12.0f, (float)windowHeight - 58.0f, GLUT_BITMAP_HELVETICA_12, colorStream.str());
+    drawBitmapText(12.0f, (float)windowHeight - 74.0f, GLUT_BITMAP_HELVETICA_12, controls1);
+    drawBitmapText(12.0f, (float)windowHeight - 90.0f, GLUT_BITMAP_HELVETICA_12, controls2);
+
+    glColor3f(colorR, colorG, colorB);
+    glBegin(GL_QUADS);
+    glVertex2f((float)windowWidth - 48.0f, (float)windowHeight - 22.0f);
+    glVertex2f((float)windowWidth - 16.0f, (float)windowHeight - 22.0f);
+    glVertex2f((float)windowWidth - 16.0f, (float)windowHeight - 54.0f);
+    glVertex2f((float)windowWidth - 48.0f, (float)windowHeight - 54.0f);
+    glEnd();
+
+    glPopAttrib();
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+}
 
 void init() {
     for (int i = 0; i < 256; i++) keys[i] = false;
@@ -46,6 +118,7 @@ void display() {
     glEnd();
 
     robot.draw();
+    drawOverlay();
     glutSwapBuffers();
 }
 
@@ -70,10 +143,18 @@ void keyboard(unsigned char key, int x, int y) {
     switch (key) {
     case 'w': case 'W': robot.toggleForward(); break;
     case 's': case 'S': robot.toggleBackward(); break;
+    case 'q': case 'Q': robot.selectPreviousPart(); break;
+    case 'e': case 'E': robot.selectNextPart(); break;
     case '1': robot.setForm(HUMANOID); break;
     case '2': robot.setForm(CAR); break;
     case '3': robot.setForm(BOAT); break;
     case '4': robot.setForm(PLANE); break;
+    case '5': robot.applySelectedColorPreset(0); break;
+    case '6': robot.applySelectedColorPreset(1); break;
+    case '7': robot.applySelectedColorPreset(2); break;
+    case '8': robot.applySelectedColorPreset(3); break;
+    case '9': robot.applySelectedColorPreset(4); break;
+    case '0': robot.applySelectedColorPreset(5); break;
     case 'g': case 'G': robot.greet(); break;
     case 't': case 'T': robot.shoot(); break;
     case 27: exit(0); break;
@@ -159,6 +240,8 @@ void mouseWheel(int wheel, int direction, int x, int y) {
 
 void reshape(int w, int h) {
     if (h == 0) h = 1;
+    windowWidth = w;
+    windowHeight = h;
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();

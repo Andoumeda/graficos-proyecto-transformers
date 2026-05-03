@@ -22,6 +22,10 @@ struct PartTransform {
     float r, g, b; // color
 };
 
+struct ColorPreset {
+    float r, g, b;
+};
+
 class Robot {
 public:
     float posX, posY, posZ;
@@ -50,6 +54,9 @@ public:
     double cachedModelView[16];
     double cachedProjection[16];
     int cachedViewport[4];
+    int selectedPartIndex;
+    bool hasCustomColor[19];
+    ColorPreset customColors[19];
 
     Robot();
     void draw();
@@ -68,6 +75,13 @@ public:
     void startDragJoint(int index);
     void dragJoint(float dx);
     void endDragJoint();
+    void selectNextPart();
+    void selectPreviousPart();
+    void applySelectedColorPreset(int presetIndex);
+    const char* getModeName() const;
+    const char* getSelectedPartName() const;
+    void getSelectedPartColor(float& r, float& g, float& b) const;
+    void getSelectedPartPosition(float& x, float& y, float& z) const;
 
 private:
     void drawCube(float w, float h, float d);
@@ -82,11 +96,13 @@ private:
     void drawShotEffect();
     void playGreetingSound();
     void playShotSound();
+    bool isPartSelected(int partIdx) const;
+    void applyPartVisualState(PartTransform& t, int partIdx) const;
 
     PartTransform getPartTransform(int partIdx, RobotForm form);
     void drawPart(int partIdx, float factor);
     
-    PartTransform interpolateTransform(const PartTransform& t1, const PartTransform& t2, float factor);
+    PartTransform interpolateTransform(const PartTransform& t1, const PartTransform& t2, float factor) const;
 };
 
 #endif
