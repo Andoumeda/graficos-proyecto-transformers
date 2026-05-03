@@ -19,6 +19,40 @@ const ColorPreset colorPresets[6] = {
     {0.20f, 0.20f, 0.20f}
 };
 
+static void getShotOriginAndDirection(RobotForm form, float& ox, float& oy, float& oz, float& dirZ) {
+    // Coordenadas locales del transformer, porque Robot::draw() ya aplica
+    // posicion global y rotacion Y antes de llamar a drawShotEffect().
+    dirZ = 1.0f;
+
+    if (form == HUMANOID) {
+        // Cerca del brazo/mano derecha del robot.
+        ox = 0.78f;
+        oy = 1.45f;
+        oz = 0.35f;
+    }
+    else if (form == CAR) {
+        // Uno de los cilindros verdes superiores del modo Auto/Camion.
+        ox = 0.45f;
+        oy = 1.45f;
+        oz = 0.30f;
+    }
+    else if (form == BOAT) {
+        // Esfera de la punta del barco. Corresponde a la mano derecha
+        // en boatParts[12], ubicada junto al cilindro verde alargado.
+        // En este modelo el frente del barco va hacia +Z.
+        ox = 0.004f;
+        oy = 1.118f;
+        oz = 1.586f;
+        dirZ = 1.0f;
+    }
+    else {
+        // Punta/esfera del ala derecha del avion.
+        ox = 1.36f;
+        oy = 0.58f;
+        oz = 0.33f;
+    }
+}
+
 const PartTransform humanoidParts[19] = {
 {0.000f, 2.121f, 0.000f, 0.000f, 0.000f, 0.000f, 1.000f, 0.805f, 0.606f, 0, 0.667f, 0.000f, 0.000f}, // 0: torso
 {0.000f, 1.537f, 0.000f, 0.000f, 0.000f, 0.000f, 0.800f, 0.408f, 0.512f, 0, 0.667f, 0.000f, 0.000f}, // 1: cadera
@@ -594,11 +628,18 @@ void Robot::drawShotEffect() {
     float beamLength = 1.2f + progress * 3.0f;
     float flashScale = 1.0f + sin(progress * 3.14159f) * 1.4f;
 
+    float shotX, shotY, shotZ, shotDirZ;
+    getShotOriginAndDirection(targetForm, shotX, shotY, shotZ, shotDirZ);
+
     glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
     glDisable(GL_LIGHTING);
 
     glPushMatrix();
-    glTranslatef(0.0f, targetForm == HUMANOID ? 1.55f : 0.75f, 1.25f);
+    glTranslatef(shotX, shotY, shotZ);
+
+    if (shotDirZ < 0.0f) {
+        glRotatef(180.0f, 0.0f, 1.0f, 0.0f);
+    }
 
     glColor3f(1.0f, 0.85f, 0.05f);
     glPushMatrix();
@@ -770,7 +811,10 @@ void Robot::draw() {
         float progress = 1.0f - (shootingTimer / 0.45f);
         float pulse = 0.6f + 0.4f * sin(progress * 3.14159f);
 
-        GLfloat lightPos[] = { 0.0f, targetForm == HUMANOID ? 1.55f : 0.75f, 1.25f, 1.0f };
+        float shotX, shotY, shotZ, shotDirZ;
+        getShotOriginAndDirection(targetForm, shotX, shotY, shotZ, shotDirZ);
+
+        GLfloat lightPos[] = { shotX, shotY, shotZ, 1.0f };
         GLfloat diffuse[] = { 1.0f * pulse, 0.75f * pulse, 0.25f * pulse, 1.0f };
         GLfloat ambient[] = { 0.15f * pulse, 0.08f * pulse, 0.02f * pulse, 1.0f };
         GLfloat specular[] = { 0.9f * pulse, 0.9f * pulse, 0.6f * pulse, 1.0f };

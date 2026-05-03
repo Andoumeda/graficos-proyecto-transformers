@@ -96,7 +96,19 @@ void init() {
     // iluminacion
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
+
+    // Importante: los cubos/cilindros se escalan mucho y de forma no uniforme.
+    // Sin GL_NORMALIZE, las normales quedan con longitudes incorrectas y algunas
+    // caras pueden verse blancas o demasiado brillantes segun el angulo de camara.
+    glEnable(GL_NORMALIZE);
+
     glEnable(GL_COLOR_MATERIAL);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+
+    // Evita brillos blancos fuertes en piezas pequenas/escaladas, como las puertas.
+    GLfloat matSpecular[] = { 0.05f, 0.05f, 0.05f, 1.0f };
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, matSpecular);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 8.0f);
 
     GLfloat lightPos[] = { 5.0f, 10.0f, 5.0f, 1.0f };
     glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
