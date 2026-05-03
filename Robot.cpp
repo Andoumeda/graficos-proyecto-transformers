@@ -107,7 +107,7 @@ const PartTransform planeParts[19] = {
 {-0.200f, 0.516f, 0.800f, 0.000f, 0.000f, -90.000f, 0.180f, 0.080f, 0.180f, 1, 0.000f, 0.000f, 0.000f}  // 18: rueda-tras-izq
 };
 
-Robot::Robot() : posX(0), posY(0), posZ(0), rotY(0), currentForm(HUMANOID), targetForm(HUMANOID), walkCycle(0), wheelRotation(0), isMoving(false), transformFactor(1.0f), greetingTimer(0.0f), shootingTimer(0.0f), propellerAngle(0.0f), isDraggingPropeller(false), moveState(IDLE), isEditMode(false), shoulderRightAngle(0), shoulderLeftAngle(0), elbowRightAngle(0), elbowLeftAngle(0), hipRightAngle(0), hipLeftAngle(0), kneeRightAngle(0), kneeLeftAngle(0), dragJointIndex(-1), isDraggingJoint(false), selectedPartIndex(0) {
+Robot::Robot() : posX(0), posY(0), posZ(0), rotY(0), currentForm(HUMANOID), targetForm(HUMANOID), walkCycle(0), wheelRotation(0), isMoving(false), transformFactor(1.0f), greetingTimer(0.0f), shootingTimer(0.0f), propellerAngle(0.0f), isDraggingPropeller(false), doorAngle(0.0f), isDraggingDoor(false), moveState(IDLE), isEditMode(false), shoulderRightAngle(0), shoulderLeftAngle(0), elbowRightAngle(0), elbowLeftAngle(0), hipRightAngle(0), hipLeftAngle(0), kneeRightAngle(0), kneeLeftAngle(0), dragJointIndex(-1), isDraggingJoint(false), selectedPartIndex(0) {
     for (int i = 0; i < 8; i++) controlPoints[i].visible = false;
     for (int i = 0; i < 19; i++) {
         hasCustomColor[i] = false;
@@ -389,6 +389,33 @@ void Robot::drawLocalPart(const PartTransform& parent, int partIdx, RobotForm fo
     glPopMatrix();
 }
 
+void Robot::drawCarDoor(const PartTransform& parent, int partIdx) {
+    PartTransform t = getPartTransform(partIdx, CAR);
+
+    // Las puertas del modo Auto/Camion son las piezas 10 y 11.
+    // Se dibujan con una jerarquia simple: primero nos movemos a una "bisagra"
+    // aproximada, giramos sobre el eje Y y luego dibujamos la puerta desplazada
+    // desde esa bisagra. Asi el arrastre del mouse funciona como las extremidades.
+    float side = (partIdx == 10) ? 1.0f : -1.0f;
+    float localX = t.tx - parent.tx;
+    float localY = t.ty - parent.ty;
+    float localZ = t.tz - parent.tz;
+
+    float hingeX = localX;
+    float hingeY = localY;
+    float hingeZ = localZ + 0.28f;
+
+    glPushMatrix();
+    glTranslatef(hingeX, hingeY, hingeZ);
+    glRotatef(-side * doorAngle, 0.0f, 1.0f, 0.0f);
+    glTranslatef(localX - hingeX, localY - hingeY, localZ - hingeZ);
+    glRotatef(t.ry, 0, 1, 0);
+    glRotatef(t.rx, 1, 0, 0);
+    glRotatef(t.rz, 0, 0, 1);
+    drawPrimitiveAtOrigin(t);
+    glPopMatrix();
+}
+
 void Robot::drawHierarchicalArm(bool rightSide, float shoulderSwing, float wave, float userShoulderAngle, float userElbowAngle) {
     int upperIdx = rightSide ? 2 : 3;
     int lowerIdx = rightSide ? 4 : 5;
@@ -512,6 +539,12 @@ void Robot::drawHierarchicalVehicle(RobotForm form) {
             glRotatef(t.rz, 0, 0, 1);
             drawPrimitiveAtOrigin(t);
             glPopMatrix();
+            continue;
+        }
+
+        // puertas del modo auto/camion: se dibujan aparte para aplicar apertura/cierre
+        if (form == CAR && (i == 10 || i == 11)) {
+            drawCarDoor(root, i);
             continue;
         }
 
@@ -764,12 +797,23 @@ int Robot::hitTestControlPoint(int sx, int sy) const {
 
 bool Robot::hitTestRobotBody(int sx, int sy) const {
     GLdouble wx, wy, wz;
-    gluProject(posX, posY + 1.5, posZ, cachedModelView, cachedProjection, cachedViewport, &wx, &wy, &wz);
+
+    // Antes se usaba un radio fijo pequeno alrededor del centro del robot.
+    // En modo avion la helice queda lejos de ese centro, por eso el clic casi no se detectaba.
+    // Ahora se usa una zona de clic mas amplia para vehiculos, sin afectar la edicion fina
+    // de las articulaciones del humanoide.
+    gluProject(posX, posY + 1.0, posZ, cachedModelView, cachedProjection, cachedViewport, &wx, &wy, &wz);
+
     float cx = (float)wx;
     float cy = (float)(cachedViewport[3] - wy);
     float dx = (float)sx - cx;
     float dy = (float)sy - cy;
-    return (dx * dx + dy * dy) < 60.0f * 60.0f;
+
+    float radius = 70.0f;
+    if (targetForm == CAR || targetForm == BOAT) radius = 140.0f;
+    if (targetForm == PLANE) radius = 190.0f;
+
+    return (dx * dx + dy * dy) < radius * radius;
 }
 
 void Robot::startDragJoint(int index) {

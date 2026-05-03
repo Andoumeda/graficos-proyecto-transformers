@@ -41,7 +41,8 @@ void drawOverlay() {
     std::string modeLine = std::string("Modo: ") + robot.getModeName() +
         " | Pieza: " + robot.getSelectedPartName();
     std::string controls1 = "Controles: 1 Robot | 2 Auto/Camion | 3 Barco | 4 Avion | W/S mover | A/D girar | G saludar | T disparar";
-    std::string controls2 = "Seleccion: Q anterior | E siguiente | Colores: 5 Rojo | 6 Verde | 7 Azul | 8 Amarillo | 9 Blanco | 0 Negro";
+    std::string controls2 = "Mouse: Robot edita extremidades | Avion gira helice | Auto/Camion abre/cierra puertas";
+    std::string controls3 = "Seleccion: Q anterior | E siguiente | Mouse: Avion=helice, Auto=puertas, Robot=extremidades";
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -59,8 +60,8 @@ void drawOverlay() {
     glBegin(GL_QUADS);
     glVertex2f(0.0f, (float)windowHeight);
     glVertex2f((float)windowWidth, (float)windowHeight);
-    glVertex2f((float)windowWidth, (float)windowHeight - 96.0f);
-    glVertex2f(0.0f, (float)windowHeight - 96.0f);
+    glVertex2f((float)windowWidth, (float)windowHeight - 112.0f);
+    glVertex2f(0.0f, (float)windowHeight - 112.0f);
     glEnd();
 
     glColor3f(0.95f, 0.95f, 0.95f);
@@ -69,6 +70,7 @@ void drawOverlay() {
     drawBitmapText(12.0f, (float)windowHeight - 58.0f, GLUT_BITMAP_HELVETICA_12, colorStream.str());
     drawBitmapText(12.0f, (float)windowHeight - 74.0f, GLUT_BITMAP_HELVETICA_12, controls1);
     drawBitmapText(12.0f, (float)windowHeight - 90.0f, GLUT_BITMAP_HELVETICA_12, controls2);
+    drawBitmapText(12.0f, (float)windowHeight - 106.0f, GLUT_BITMAP_HELVETICA_12, controls3);
 
     glColor3f(colorR, colorG, colorB);
     glBegin(GL_QUADS);
@@ -171,10 +173,16 @@ void mouse(int button, int state, int x, int y) {
             lastMouseX = x;
             lastMouseY = y;
 
-            // modo avion: arrastrar helice con el mouse
+            // modo avion: arrastrar horizontalmente para girar la helice
             if (robot.targetForm == PLANE && robot.currentForm == PLANE &&
                 robot.transformFactor >= 1.0f && robot.hitTestRobotBody(x, y)) {
                 robot.isDraggingPropeller = true;
+                isDragging = false;
+            }
+            // modo auto/camion: arrastrar horizontalmente para abrir/cerrar puertas
+            else if (robot.targetForm == CAR && robot.currentForm == CAR &&
+                robot.transformFactor >= 1.0f && robot.hitTestRobotBody(x, y)) {
+                robot.isDraggingDoor = true;
                 isDragging = false;
             } else if (robot.isEditMode) {
                 int cp = robot.hitTestControlPoint(x, y);
@@ -196,6 +204,7 @@ void mouse(int button, int state, int x, int y) {
         } else {
             robot.endDragJoint();
             robot.isDraggingPropeller = false;
+            robot.isDraggingDoor = false;
             isDragging = false;
         }
     } else if (button == GLUT_RIGHT_BUTTON) {
@@ -220,6 +229,10 @@ void motion(int x, int y) {
         robot.propellerAngle += (float)dx * 2.0f;
         if (robot.propellerAngle > 360.0f) robot.propellerAngle -= 360.0f;
         if (robot.propellerAngle < 0.0f) robot.propellerAngle += 360.0f;
+    } else if (robot.isDraggingDoor) {
+        robot.doorAngle += (float)dx * 0.6f;
+        if (robot.doorAngle < 0.0f) robot.doorAngle = 0.0f;
+        if (robot.doorAngle > 85.0f) robot.doorAngle = 85.0f;
     } else if (robot.isDraggingJoint) {
         robot.dragJoint((float)dx);
     } else if (isDragging) {

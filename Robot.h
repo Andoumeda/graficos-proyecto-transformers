@@ -42,6 +42,8 @@ public:
     float shootingTimer; // duracion del disparo
     float propellerAngle; // angulo de la helice en modo avion
     bool isDraggingPropeller; // true si el usuario arrastra la helice
+    float doorAngle; // angulo de apertura de las puertas en modo auto/camion
+    bool isDraggingDoor; // true si el usuario arrastra las puertas
 
     bool isEditMode;
     float shoulderRightAngle, shoulderLeftAngle;
@@ -89,6 +91,7 @@ private:
     void drawSphere(float r);
     void drawPrimitiveAtOrigin(const PartTransform& t);
     void drawLocalPart(const PartTransform& parent, int partIdx, RobotForm form, float extraRx = 0.0f, float extraRy = 0.0f, float extraRz = 0.0f);
+    void drawCarDoor(const PartTransform& parent, int partIdx);
     void drawHierarchicalHumanoid();
     void drawHierarchicalVehicle(RobotForm form);
     void drawHierarchicalArm(bool rightSide, float shoulderSwing, float wave, float userShoulderAngle, float userElbowAngle);
