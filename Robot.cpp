@@ -38,9 +38,7 @@ static void getShotOriginAndDirection(RobotForm form, float& ox, float& oy, floa
         oz = 0.30f;
     }
     else if (form == BOAT) {
-        // Esfera de la punta del barco. Corresponde a la mano derecha
-        // en boatParts[12], ubicada junto al cilindro verde alargado.
-        // En este modelo el frente del barco va hacia +Z.
+        // Esfera de la punta del barco.
         ox = 0.004f;
         oy = 1.118f;
         oz = 1.586f;
@@ -260,7 +258,6 @@ void Robot::moveForward(float distance) {
     posX += sin(rad) * distance;
     posZ += cos(rad) * distance;
     isMoving = true;
-    greetingTimer = 0; // cancela el saludo si se mueve
 }
 
 // Alterna el movimiento hacia adelante.
@@ -1162,7 +1159,7 @@ void Robot::changeColor() {
 void Robot::clearColor() {
     if (currentForm == HUMANOID) {
 		// Restaurar colores originales del humanoide
-        // Cuerpo principal (Power Ranger style)
+        // Cuerpo principal
         for (int i = 0; i < 19; ++i) {
             if (i == 0 || i == 1) {
                 humanoidParts[i].r = 0.667f;
