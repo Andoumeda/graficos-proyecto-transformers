@@ -19,7 +19,6 @@ int windowHeight = 600;
 
 bool keys[256];
 
-
 const float PI_F = 3.1415926535f;
 
 struct Vec3 {
@@ -28,6 +27,7 @@ struct Vec3 {
 
 Vec3 sunPosition = { -7.0f, 12.0f, 6.0f };
 
+// Dibuja una elipse en el plano XZ (sombra del robot).
 void drawEllipseXZ(float radiusX, float radiusZ, int segments) {
     glBegin(GL_TRIANGLE_FAN);
     glVertex3f(0.0f, 0.0f, 0.0f);
@@ -38,6 +38,7 @@ void drawEllipseXZ(float radiusX, float radiusZ, int segments) {
     glEnd();
 }
 
+// Dibuja el cielo con degradado y nubes simples.
 void drawSkyBackground() {
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -53,17 +54,15 @@ void drawSkyBackground() {
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_FOG);
 
-    // Gradiente de cielo. Es 2D para funcionar bien con la tuberia fija de OpenGL.
     glBegin(GL_QUADS);
-    glColor3f(0.42f, 0.72f, 1.00f); // horizonte
+    glColor3f(0.42f, 0.72f, 1.00f);
     glVertex2f(0.0f, 0.0f);
     glVertex2f((float)windowWidth, 0.0f);
-    glColor3f(0.05f, 0.22f, 0.55f); // parte alta
+    glColor3f(0.05f, 0.22f, 0.55f);
     glVertex2f((float)windowWidth, (float)windowHeight);
     glVertex2f(0.0f, (float)windowHeight);
     glEnd();
 
-    // Nubes simples hechas con circulos 2D translúcidos.
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(1.0f, 1.0f, 1.0f, 0.55f);
@@ -93,8 +92,8 @@ void drawSkyBackground() {
     glMatrixMode(GL_MODELVIEW);
 }
 
+// Configura la iluminacion principal de la escena.
 void setupWorldLighting() {
-    // La posicion de la luz se carga despues de camera.apply(), por eso queda en coordenadas del mundo.
     GLfloat lightPos[] = { sunPosition.x, sunPosition.y, sunPosition.z, 1.0f };
     GLfloat diffuse[]  = { 1.00f, 0.92f, 0.78f, 1.0f };
     GLfloat specular[] = { 0.75f, 0.70f, 0.62f, 1.0f };
@@ -106,6 +105,7 @@ void setupWorldLighting() {
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
 }
 
+// Dibuja el sol como una esfera amarilla.
 void drawSun() {
     glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_LIGHTING_BIT);
     glDisable(GL_LIGHTING);
@@ -118,6 +118,7 @@ void drawSun() {
     glPopAttrib();
 }
 
+// Dibuja el piso a cuadros.
 void drawCheckerFloor() {
     const int halfSize = 24;
     const float tile = 1.0f;
@@ -147,12 +148,10 @@ void drawCheckerFloor() {
         }
     }
 
-    // No se dibujan anillos decorativos sobre el piso.
-    // En perspectiva se veian como ovalos grandes y podian confundirse con una segunda sombra.
-
     glPopAttrib();
 }
 
+// Dibuja la sombra eliptica del robot en el suelo.
 void drawRobotBlobShadow() {
     float sx = 1.15f;
     float sz = 0.70f;
@@ -184,8 +183,6 @@ void drawRobotBlobShadow() {
     glTranslatef(robot.posX, 0.018f, robot.posZ);
     glRotatef(robot.rotY, 0.0f, 1.0f, 0.0f);
 
-    // Sombra unica del transformer.
-    // Antes habia una segunda elipse desplazada; eso generaba el efecto de "doble sombra".
     glColor4f(0.0f, 0.0f, 0.0f, alpha);
     drawEllipseXZ(sx, sz, 80);
 
@@ -195,11 +192,13 @@ void drawRobotBlobShadow() {
 }
 
 
+// Dibuja texto bitmap en coordenadas 2D.
 void drawBitmapText(float x, float y, void* font, const std::string& text) {
     glRasterPos2f(x, y);
     for (char c : text) glutBitmapCharacter(font, c);
 }
 
+// Dibuja la barra de informacion y controles en pantalla.
 void drawOverlay() {
     float partX, partY, partZ;
     float colorR, colorG, colorB;
@@ -264,6 +263,7 @@ void drawOverlay() {
     glMatrixMode(GL_MODELVIEW);
 }
 
+// Inicializa el estado OpenGL y la iluminacion.
 void init() {
     for (int i = 0; i < 256; i++) keys[i] = false;
 
@@ -273,7 +273,6 @@ void init() {
     glShadeModel(GL_SMOOTH);
     glEnable(GL_NORMALIZE);
 
-    // Iluminacion fija de OpenGL: difusa + especular.
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
     glEnable(GL_COLOR_MATERIAL);
@@ -283,12 +282,10 @@ void init() {
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, matSpecular);
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 24.0f);
 
-    // Atenuacion suave para que se note mas el punto de luz del sol.
     glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 1.0f);
     glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.018f);
     glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, 0.0015f);
 
-    // Niebla muy suave: ayuda a integrar el piso con el cielo.
     GLfloat fogColor[] = { 0.42f, 0.72f, 1.0f, 1.0f };
     glEnable(GL_FOG);
     glFogfv(GL_FOG_COLOR, fogColor);
@@ -297,6 +294,7 @@ void init() {
     glFogf(GL_FOG_END, 48.0f);
 }
 
+// Funcion de display: renderiza toda la escena.
 void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -317,6 +315,7 @@ void display() {
     glutSwapBuffers();
 }
 
+// Callback de actualizacion periodica: procesa input y actualiza el robot.
 void update(int value) {
     float moveSpeed = 0.2f;
     float turnSpeed = 3.0f;
@@ -332,6 +331,7 @@ void update(int value) {
     glutTimerFunc(16, update, 0);
 }
 
+// Callback de teclado: procesa las teclas presionadas.
 void keyboard(unsigned char key, int x, int y) {
     if (key < 256) keys[key] = true;
     
@@ -358,23 +358,23 @@ void keyboard(unsigned char key, int x, int y) {
     }
 }
 
+// Callback de teclado liberado.
 void keyboardUp(unsigned char key, int x, int y) {
     if (key < 256) keys[key] = false;
 }
 
+// Callback de mouse: maneja clic y rueda.
 void mouse(int button, int state, int x, int y) {
     if (button == GLUT_LEFT_BUTTON) {
         if (state == GLUT_DOWN) {
             lastMouseX = x;
             lastMouseY = y;
 
-            // modo avion: arrastrar horizontalmente para girar la helice
             if (robot.targetForm == PLANE && robot.currentForm == PLANE &&
                 robot.transformFactor >= 1.0f && robot.hitTestRobotBody(x, y)) {
                 robot.isDraggingPropeller = true;
                 isDragging = false;
             }
-            // modo auto/camion: arrastrar horizontalmente para abrir/cerrar puertas
             else if (robot.targetForm == CAR && robot.currentForm == CAR &&
                 robot.transformFactor >= 1.0f && robot.hitTestRobotBody(x, y)) {
                 robot.isDraggingDoor = true;
@@ -416,6 +416,7 @@ void mouse(int button, int state, int x, int y) {
     }
 }
 
+// Callback de arrastre del mouse: rotacion de camara y articulaciones.
 void motion(int x, int y) {
     int dx = x - lastMouseX;
     int dy = y - lastMouseY;
@@ -441,11 +442,13 @@ void motion(int x, int y) {
     glutPostRedisplay();
 }
 
+// Callback de rueda del mouse: zoom de camara.
 void mouseWheel(int wheel, int direction, int x, int y) {
     camera.zoom(direction > 0 ? -1.0f : 1.0f);
     glutPostRedisplay();
 }
 
+// Callback de redimensionamiento de ventana.
 void reshape(int w, int h) {
     if (h == 0) h = 1;
     windowWidth = w;
@@ -457,6 +460,7 @@ void reshape(int w, int h) {
     glMatrixMode(GL_MODELVIEW);
 }
 
+// Punto de entrada: inicializa GLUT y entra al loop principal.
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);

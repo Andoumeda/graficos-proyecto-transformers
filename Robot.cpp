@@ -21,9 +21,8 @@ const ColorPreset colorPresets[6] = {
     {0.20f, 0.20f, 0.20f}
 };
 
+// Obtiene la posicion y direccion del efecto de disparo segun la forma actual.
 static void getShotOriginAndDirection(RobotForm form, float& ox, float& oy, float& oz, float& dirZ) {
-    // Coordenadas locales del transformer, porque Robot::draw() ya aplica
-    // posicion global y rotacion Y antes de llamar a drawShotEffect().
     dirZ = 1.0f;
 
     if (form == HUMANOID) {
@@ -143,6 +142,7 @@ PartTransform planeParts[19] = {
 {-0.200f, 0.516f, 0.800f, 0.000f, 0.000f, -90.000f, 0.180f, 0.080f, 0.180f, 1, 0.000f, 0.000f, 0.000f}  // 18: rueda-tras-izq
 };
 
+// Constructor: inicializa todas las propiedades del robot en su estado por defecto.
 Robot::Robot() : posX(0), posY(0), posZ(0), rotY(0), currentForm(HUMANOID), targetForm(HUMANOID), walkCycle(0), wheelRotation(0), isMoving(false), transformFactor(1.0f), greetingTimer(0.0f), shootingTimer(0.0f), propellerAngle(0.0f), isDraggingPropeller(false), doorAngle(0.0f), isDraggingDoor(false), moveState(IDLE), isEditMode(false), shoulderRightAngle(0), shoulderLeftAngle(0), elbowRightAngle(0), elbowLeftAngle(0), hipRightAngle(0), hipLeftAngle(0), kneeRightAngle(0), kneeLeftAngle(0), dragJointIndex(-1), isDraggingJoint(false), selectedPartIndex(0) {
     for (int i = 0; i < 8; i++) controlPoints[i].visible = false;
     for (int i = 0; i < 19; i++) {
@@ -151,6 +151,7 @@ Robot::Robot() : posX(0), posY(0), posZ(0), rotY(0), currentForm(HUMANOID), targ
     }
 }
 
+// Dibuja un prisma (cubo) con las dimensiones dadas.
 void Robot::drawCube(float w, float h, float d) {
     glPushMatrix();
     glScalef(w, h, d);
@@ -158,6 +159,7 @@ void Robot::drawCube(float w, float h, float d) {
     glPopMatrix();
 }
 
+// Dibuja un cilindro con el radio y la altura especificados.
 void Robot::drawCylinder(float r, float h) {
     GLUquadric* quad = gluNewQuadric();
     gluCylinder(quad, r, r, h, 20, 20);
@@ -169,10 +171,12 @@ void Robot::drawCylinder(float r, float h) {
     gluDeleteQuadric(quad);
 }
 
+// Dibuja una esfera solida con el radio dado.
 void Robot::drawSphere(float r) {
     glutSolidSphere(r, 20, 20);
 }
 
+// Reproduce el archivo de audio del saludo.
 void Robot::playGreetingSound() {
     mciSendString(L"close saludo", NULL, 0, NULL);
     mciSendString(L"open \"saludo.mp3\" type mpegvideo alias saludo", NULL, 0, NULL);
@@ -180,15 +184,18 @@ void Robot::playGreetingSound() {
     mciSendString(L"play saludo from 0 to 7000", NULL, 0, NULL);
 }
 
+// Reproduce un pitido corto como efecto de sonido de disparo.
 void Robot::playShotSound() {
     Beep(1200, 45);
     Beep(420, 70);
 }
 
+// Retorna true si la pieza indicada esta seleccionada.
 bool Robot::isPartSelected(int partIdx) const {
     return selectedPartIndex == partIdx;
 }
 
+// Aplica el color personalizado y el efecto de seleccion a una pieza.
 void Robot::applyPartVisualState(PartTransform& t, int partIdx) const {
     if (hasCustomColor[partIdx]) {
         t.r = customColors[partIdx].r;
@@ -212,6 +219,7 @@ void Robot::applyPartVisualState(PartTransform& t, int partIdx) const {
     }
 }
 
+// Dibuja la primitiva geometrica (cubo, cilindro o esfera) en el origen.
 void Robot::drawPrimitiveAtOrigin(const PartTransform& t) {
     glColor3f(t.r, t.g, t.b);
 
@@ -232,6 +240,7 @@ void Robot::drawPrimitiveAtOrigin(const PartTransform& t) {
     }
 }
 
+// Cambia la forma objetivo del robot e inicia la transicion.
 void Robot::setForm(RobotForm form) {
     if (form != targetForm) {
         currentForm = targetForm;
@@ -240,10 +249,12 @@ void Robot::setForm(RobotForm form) {
     }
 }
 
+// Rota el robot sobre el eje Y.
 void Robot::turn(float angle) {
     rotY += angle;
 }
 
+// Mueve el robot hacia adelante o atras segun la orientacion actual.
 void Robot::moveForward(float distance) {
     float rad = rotY * 3.14159f / 180.0f;
     posX += sin(rad) * distance;
@@ -252,6 +263,7 @@ void Robot::moveForward(float distance) {
     greetingTimer = 0; // cancela el saludo si se mueve
 }
 
+// Alterna el movimiento hacia adelante.
 void Robot::toggleForward() {
     if (moveState == MOVING_FORWARD) {
         moveState = IDLE;
@@ -261,6 +273,7 @@ void Robot::toggleForward() {
     }
 }
 
+// Alterna el movimiento hacia atras.
 void Robot::toggleBackward() {
     if (moveState == MOVING_BACKWARD) {
         moveState = IDLE;
@@ -270,6 +283,7 @@ void Robot::toggleBackward() {
     }
 }
 
+// Inicia la animacion de saludo y reproduce el sonido.
 void Robot::greet() {
     if (greetingTimer <= 0) {
         greetingTimer = 2.0f;
@@ -277,11 +291,13 @@ void Robot::greet() {
     }
 }
 
+// Activa el efecto visual de disparo.
 void Robot::shoot() {
     shootingTimer = 0.45f;
     playShotSound();
 }
 
+// Actualiza las animaciones y el estado interno del robot cada frame.
 void Robot::update(float deltaTime) {
     if (transformFactor < 1.0f) {
         transformFactor += deltaTime * 1.5f;
@@ -319,6 +335,7 @@ void Robot::update(float deltaTime) {
     isMoving = false;
 }
 
+// Retorna la transformacion de una pieza para la forma indicada.
 PartTransform Robot::getPartTransform(int partIdx, RobotForm form) {
     PartTransform t;
     if (form == HUMANOID) t = humanoidParts[partIdx];
@@ -332,10 +349,12 @@ PartTransform Robot::getPartTransform(int partIdx, RobotForm form) {
     return t;
 }
 
+// Interpolacion lineal entre dos valores.
 float lerp(float a, float b, float f) {
     return a + f * (b - a);
 }
 
+// Interpolacion de angulos resolviendo el camino mas corto.
 float lerpAngle(float a, float b, float f) {
     float diff = fmod(b - a, 360.0f);
     if (diff < -180.0f) diff += 360.0f;
@@ -343,6 +362,7 @@ float lerpAngle(float a, float b, float f) {
     return a + f * diff;
 }
 
+// Interpola entre dos transformaciones de pieza segun un factor.
 PartTransform Robot::interpolateTransform(const PartTransform& t1, const PartTransform& t2, float factor) const {
     PartTransform res;
     res.tx = lerp(t1.tx, t2.tx, factor);
@@ -361,6 +381,7 @@ PartTransform Robot::interpolateTransform(const PartTransform& t1, const PartTra
     return res;
 }
 
+// Dibuja una pieza individual interpolando entre la forma actual y la objetivo.
 void Robot::drawPart(int partIdx, float factor) {
     PartTransform curr = getPartTransform(partIdx, currentForm);
     PartTransform target = getPartTransform(partIdx, targetForm);
@@ -422,6 +443,7 @@ void Robot::drawPart(int partIdx, float factor) {
     glPopMatrix();
 }
 
+// Dibuja una pieza como hija de un nodo padre con rotaciones extra.
 void Robot::drawLocalPart(const PartTransform& parent, int partIdx, RobotForm form, float extraRx, float extraRy, float extraRz) {
     PartTransform t = getPartTransform(partIdx, form);
 
@@ -434,13 +456,10 @@ void Robot::drawLocalPart(const PartTransform& parent, int partIdx, RobotForm fo
     glPopMatrix();
 }
 
+// Dibuja la puerta del modo auto/camion con rotacion tipo bisagra.
 void Robot::drawCarDoor(const PartTransform& parent, int partIdx) {
     PartTransform t = getPartTransform(partIdx, CAR);
 
-    // Las puertas del modo Auto/Camion son las piezas 10 y 11.
-    // Se dibujan con una jerarquia simple: primero nos movemos a una "bisagra"
-    // aproximada, giramos sobre el eje Y y luego dibujamos la puerta desplazada
-    // desde esa bisagra. Asi el arrastre del mouse funciona como las extremidades.
     float side = (partIdx == 10) ? 1.0f : -1.0f;
     float localX = t.tx - parent.tx;
     float localY = t.ty - parent.ty;
@@ -461,6 +480,7 @@ void Robot::drawCarDoor(const PartTransform& parent, int partIdx) {
     glPopMatrix();
 }
 
+// Dibuja el brazo completo con jerarquia hombro-codo-mano.
 void Robot::drawHierarchicalArm(bool rightSide, float shoulderSwing, float wave, float userShoulderAngle, float userElbowAngle) {
     int upperIdx = rightSide ? 2 : 3;
     int lowerIdx = rightSide ? 4 : 5;
@@ -556,6 +576,7 @@ void Robot::drawHierarchicalArm(bool rightSide, float shoulderSwing, float wave,
     glPopMatrix();
 }
 
+// Dibuja el vehiculo con animaciones de rebote, balanceo y giro de helice.
 void Robot::drawHierarchicalVehicle(RobotForm form) {
     PartTransform root = getPartTransform(1, form);
     float bob = 0.0f;
@@ -624,6 +645,7 @@ void Robot::drawHierarchicalVehicle(RobotForm form) {
     glPopMatrix();
 }
 
+// Dibuja el rayo de disparo con flash inicial y haz luminoso.
 void Robot::drawShotEffect() {
     if (shootingTimer <= 0.0f) return;
 
@@ -665,6 +687,7 @@ void Robot::drawShotEffect() {
 }
 
 
+// Dibuja la pierna completa con jerarquia cadera-rodilla-pie.
 void Robot::drawHierarchicalLeg(bool rightSide, float hipSwing, float kneeBend, float userHipAngle, float userKneeAngle) {
     int thighIdx = rightSide ? 6 : 7;
     int shinIdx = rightSide ? 8 : 9;
@@ -743,6 +766,7 @@ void Robot::drawHierarchicalLeg(bool rightSide, float hipSwing, float kneeBend, 
     glPopMatrix();
 }
 
+// Dibuja el robot humanoide completo con animacion de marcha.
 void Robot::drawHierarchicalHumanoid() {
     const PartTransform pelvis = getPartTransform(1, HUMANOID);
     const PartTransform torso = getPartTransform(0, HUMANOID);
@@ -800,6 +824,7 @@ void Robot::drawHierarchicalHumanoid() {
     glPopMatrix();
 }
 
+// Funcion principal de dibujado: aplica transformacion global y delega al modo correspondiente.
 void Robot::draw() {
     glGetDoublev(GL_MODELVIEW_MATRIX, cachedModelView);
     glGetDoublev(GL_PROJECTION_MATRIX, cachedProjection);
@@ -847,11 +872,13 @@ void Robot::draw() {
     glPopMatrix();
 }
 
+// Retorna true si se puede entrar en modo edicion.
 bool Robot::canEdit() const {
     return targetForm == HUMANOID && currentForm == HUMANOID &&
            transformFactor >= 1.0f && moveState == IDLE && greetingTimer <= 0.0f;
 }
 
+// Alterna el modo edicion de articulaciones.
 void Robot::toggleEditMode() {
     if (!canEdit() && !isEditMode) return;
     isEditMode = !isEditMode;
@@ -868,6 +895,7 @@ void Robot::toggleEditMode() {
     isDraggingJoint = false;
 }
 
+// Verifica si un clic en pantalla coincide con un punto de control visible.
 int Robot::hitTestControlPoint(int sx, int sy) const {
     int closest = -1;
     float minDist = 25.0f;
@@ -884,13 +912,10 @@ int Robot::hitTestControlPoint(int sx, int sy) const {
     return closest;
 }
 
+// Verifica si un clic en pantalla cae dentro del cuerpo del robot.
 bool Robot::hitTestRobotBody(int sx, int sy) const {
     GLdouble wx, wy, wz;
 
-    // Antes se usaba un radio fijo pequeno alrededor del centro del robot.
-    // En modo avion la helice queda lejos de ese centro, por eso el clic casi no se detectaba.
-    // Ahora se usa una zona de clic mas amplia para vehiculos, sin afectar la edicion fina
-    // de las articulaciones del humanoide.
     gluProject(posX, posY + 1.0, posZ, cachedModelView, cachedProjection, cachedViewport, &wx, &wy, &wz);
 
     float cx = (float)wx;
@@ -905,11 +930,13 @@ bool Robot::hitTestRobotBody(int sx, int sy) const {
     return (dx * dx + dy * dy) < radius * radius;
 }
 
+// Inicia el arrastre de una articulacion.
 void Robot::startDragJoint(int index) {
     dragJointIndex = index;
     isDraggingJoint = true;
 }
 
+// Aplica la rotacion de arrastre a la articulacion activa.
 void Robot::dragJoint(float dx) {
     if (dragJointIndex < 0 || dragJointIndex > 7) return;
     float angleDelta = dx * 0.5f;
@@ -926,25 +953,30 @@ void Robot::dragJoint(float dx) {
     if (*angles[dragJointIndex] > hi[dragJointIndex]) *angles[dragJointIndex] = hi[dragJointIndex];
 }
 
+// Finaliza el arrastre de articulacion.
 void Robot::endDragJoint() {
     dragJointIndex = -1;
     isDraggingJoint = false;
 }
 
+// Selecciona la siguiente pieza del robot.
 void Robot::selectNextPart() {
     selectedPartIndex = (selectedPartIndex + 1) % 19;
 }
 
+// Selecciona la pieza anterior del robot.
 void Robot::selectPreviousPart() {
     selectedPartIndex = (selectedPartIndex + 18) % 19;
 }
 
+// Aplica un preset de color a la pieza seleccionada.
 void Robot::applySelectedColorPreset(int presetIndex) {
     if (presetIndex < 0 || presetIndex >= 6) return;
     hasCustomColor[selectedPartIndex] = true;
     customColors[selectedPartIndex] = colorPresets[presetIndex];
 }
 
+// Retorna el nombre del modo actual del robot.
 const char* Robot::getModeName() const {
     if (transformFactor < 1.0f) return "Transformando";
     switch (targetForm) {
@@ -956,10 +988,12 @@ const char* Robot::getModeName() const {
     }
 }
 
+// Retorna el nombre de la pieza seleccionada.
 const char* Robot::getSelectedPartName() const {
     return partNames[selectedPartIndex];
 }
 
+// Obtiene el color actual de la pieza seleccionada.
 void Robot::getSelectedPartColor(float& r, float& g, float& b) const {
     PartTransform t;
     if (targetForm == HUMANOID) t = humanoidParts[selectedPartIndex];
@@ -974,6 +1008,7 @@ void Robot::getSelectedPartColor(float& r, float& g, float& b) const {
     b = hasCustomColor[selectedPartIndex] ? customColors[selectedPartIndex].b : t.b;
 }
 
+// Obtiene la posicion global de la pieza seleccionada.
 void Robot::getSelectedPartPosition(float& x, float& y, float& z) const {
     PartTransform curr;
     PartTransform target;
@@ -1000,6 +1035,7 @@ void Robot::getSelectedPartPosition(float& x, float& y, float& z) const {
     z = posZ + t.tz;
 }
 
+// Aplica colores aleatorios al robot segun su forma actual.
 void Robot::changeColor() {
     // Semilla aleatoria
     static bool seeded = false;
@@ -1122,6 +1158,7 @@ void Robot::changeColor() {
     }
 }
 
+// Restaura los colores originales de todas las piezas.
 void Robot::clearColor() {
     if (currentForm == HUMANOID) {
 		// Restaurar colores originales del humanoide
