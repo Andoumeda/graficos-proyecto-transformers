@@ -147,9 +147,6 @@ void drawCheckerFloor() {
         }
     }
 
-    // No se dibujan anillos decorativos sobre el piso.
-    // En perspectiva se veian como ovalos grandes y podian confundirse con una segunda sombra.
-
     glPopAttrib();
 }
 
@@ -184,8 +181,7 @@ void drawRobotBlobShadow() {
     glTranslatef(robot.posX, 0.018f, robot.posZ);
     glRotatef(robot.rotY, 0.0f, 1.0f, 0.0f);
 
-    // Sombra unica del transformer.
-    // Antes habia una segunda elipse desplazada; eso generaba el efecto de "doble sombra".
+    // Sombra del transformer
     glColor4f(0.0f, 0.0f, 0.0f, alpha);
     drawEllipseXZ(sx, sz, 80);
 
@@ -336,25 +332,25 @@ void keyboard(unsigned char key, int x, int y) {
     if (key < 256) keys[key] = true;
     
     switch (key) {
-    case 'w': case 'W': robot.toggleForward(); break;
-    case 's': case 'S': robot.toggleBackward(); break;
-    case 'q': case 'Q': robot.selectPreviousPart(); break;
-    case 'e': case 'E': robot.selectNextPart(); break;
-    case '1': robot.setForm(HUMANOID); break;
-    case '2': robot.setForm(CAR); break;
-    case '3': robot.setForm(BOAT); break;
-    case '4': robot.setForm(PLANE); break;
-    case '5': robot.applySelectedColorPreset(0); break;
-    case '6': robot.applySelectedColorPreset(1); break;
-    case '7': robot.applySelectedColorPreset(2); break;
-    case '8': robot.applySelectedColorPreset(3); break;
-    case '9': robot.applySelectedColorPreset(4); break;
-    case '0': robot.applySelectedColorPreset(5); break;
-    case 'g': case 'G': robot.greet(); break;
-    case 't': case 'T': robot.shoot(); break;
-    case 'c': case 'C': robot.changeColor(); break;
-    case 'v': case 'V': robot.clearColor(); break;
-    case 27: exit(0); break;
+        case 'w': case 'W': robot.toggleForward(); break;
+        case 's': case 'S': robot.toggleBackward(); break;
+        case 'q': case 'Q': robot.selectPreviousPart(); break;
+        case 'e': case 'E': robot.selectNextPart(); break;
+        case '1': robot.setForm(HUMANOID); break;
+        case '2': robot.setForm(CAR); break;
+        case '3': robot.setForm(BOAT); break;
+        case '4': robot.setForm(PLANE); break;
+        case '5': robot.applySelectedColorPreset(0); break;
+        case '6': robot.applySelectedColorPreset(1); break;
+        case '7': robot.applySelectedColorPreset(2); break;
+        case '8': robot.applySelectedColorPreset(3); break;
+        case '9': robot.applySelectedColorPreset(4); break;
+        case '0': robot.applySelectedColorPreset(5); break;
+        case 'g': case 'G': robot.greet(); break;
+        case 't': case 'T': robot.shoot(); break;
+        case 'c': case 'C': robot.changeColor(); break;
+        case 'v': case 'V': robot.clearColor(); break;
+        case 27: exit(0); break;
     }
 }
 
@@ -461,7 +457,7 @@ int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(800, 600);
-    glutCreateWindow("Transformer Robot");
+    glutCreateWindow("Proyecto Transformer");
 
     glewInit();
     init();
