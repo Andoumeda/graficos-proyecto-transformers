@@ -7,6 +7,7 @@
 #include <sstream>
 #include <iomanip>
 #include <string>
+#include <cmath>
 
 Robot robot;
 Camera camera;
@@ -17,6 +18,182 @@ int windowWidth = 800;
 int windowHeight = 600;
 
 bool keys[256];
+
+
+const float PI_F = 3.1415926535f;
+
+struct Vec3 {
+    float x, y, z;
+};
+
+Vec3 sunPosition = { -7.0f, 12.0f, 6.0f };
+
+void drawEllipseXZ(float radiusX, float radiusZ, int segments) {
+    glBegin(GL_TRIANGLE_FAN);
+    glVertex3f(0.0f, 0.0f, 0.0f);
+    for (int i = 0; i <= segments; ++i) {
+        float a = (2.0f * PI_F * i) / segments;
+        glVertex3f(cosf(a) * radiusX, 0.0f, sinf(a) * radiusZ);
+    }
+    glEnd();
+}
+
+void drawSkyBackground() {
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    gluOrtho2D(0, windowWidth, 0, windowHeight);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_DEPTH_BUFFER_BIT);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_FOG);
+
+    // Gradiente de cielo. Es 2D para funcionar bien con la tuberia fija de OpenGL.
+    glBegin(GL_QUADS);
+    glColor3f(0.42f, 0.72f, 1.00f); // horizonte
+    glVertex2f(0.0f, 0.0f);
+    glVertex2f((float)windowWidth, 0.0f);
+    glColor3f(0.05f, 0.22f, 0.55f); // parte alta
+    glVertex2f((float)windowWidth, (float)windowHeight);
+    glVertex2f(0.0f, (float)windowHeight);
+    glEnd();
+
+    // Nubes simples hechas con circulos 2D translúcidos.
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(1.0f, 1.0f, 1.0f, 0.55f);
+
+    auto cloudCircle = [](float cx, float cy, float rx, float ry) {
+        glBegin(GL_TRIANGLE_FAN);
+        glVertex2f(cx, cy);
+        for (int i = 0; i <= 32; ++i) {
+            float a = (2.0f * PI_F * i) / 32.0f;
+            glVertex2f(cx + cosf(a) * rx, cy + sinf(a) * ry);
+        }
+        glEnd();
+    };
+
+    cloudCircle(windowWidth * 0.22f, windowHeight * 0.78f, 46.0f, 15.0f);
+    cloudCircle(windowWidth * 0.27f, windowHeight * 0.80f, 58.0f, 20.0f);
+    cloudCircle(windowWidth * 0.34f, windowHeight * 0.77f, 42.0f, 14.0f);
+
+    cloudCircle(windowWidth * 0.68f, windowHeight * 0.72f, 42.0f, 14.0f);
+    cloudCircle(windowWidth * 0.73f, windowHeight * 0.75f, 60.0f, 20.0f);
+    cloudCircle(windowWidth * 0.80f, windowHeight * 0.72f, 44.0f, 14.0f);
+
+    glPopAttrib();
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+}
+
+void setupWorldLighting() {
+    // La posicion de la luz se carga despues de camera.apply(), por eso queda en coordenadas del mundo.
+    GLfloat lightPos[] = { sunPosition.x, sunPosition.y, sunPosition.z, 1.0f };
+    GLfloat diffuse[]  = { 1.00f, 0.92f, 0.78f, 1.0f };
+    GLfloat specular[] = { 0.75f, 0.70f, 0.62f, 1.0f };
+    GLfloat ambient[]  = { 0.22f, 0.25f, 0.30f, 1.0f };
+
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
+}
+
+void drawSun() {
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_LIGHTING_BIT);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_FOG);
+    glColor3f(1.0f, 0.86f, 0.18f);
+    glPushMatrix();
+    glTranslatef(sunPosition.x, sunPosition.y, sunPosition.z);
+    glutSolidSphere(0.35f, 24, 24);
+    glPopMatrix();
+    glPopAttrib();
+}
+
+void drawCheckerFloor() {
+    const int halfSize = 24;
+    const float tile = 1.0f;
+
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_LIGHTING_BIT);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_COLOR_MATERIAL);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+
+    GLfloat floorSpecular[] = { 0.08f, 0.08f, 0.08f, 1.0f };
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, floorSpecular);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 12.0f);
+
+    for (int x = -halfSize; x < halfSize; ++x) {
+        for (int z = -halfSize; z < halfSize; ++z) {
+            bool dark = ((x + z) & 1) != 0;
+            if (dark) glColor3f(0.30f, 0.31f, 0.31f);
+            else      glColor3f(0.55f, 0.56f, 0.55f);
+
+            glBegin(GL_QUADS);
+            glNormal3f(0.0f, 1.0f, 0.0f);
+            glVertex3f(x * tile, 0.0f, z * tile);
+            glVertex3f((x + 1) * tile, 0.0f, z * tile);
+            glVertex3f((x + 1) * tile, 0.0f, (z + 1) * tile);
+            glVertex3f(x * tile, 0.0f, (z + 1) * tile);
+            glEnd();
+        }
+    }
+
+    // No se dibujan anillos decorativos sobre el piso.
+    // En perspectiva se veian como ovalos grandes y podian confundirse con una segunda sombra.
+
+    glPopAttrib();
+}
+
+void drawRobotBlobShadow() {
+    float sx = 1.15f;
+    float sz = 0.70f;
+    float alpha = 0.32f;
+
+    switch (robot.targetForm) {
+    case HUMANOID:
+        sx = 0.95f; sz = 0.55f; alpha = 0.30f;
+        break;
+    case CAR:
+        sx = 1.35f; sz = 1.15f; alpha = 0.35f;
+        break;
+    case BOAT:
+        sx = 1.15f; sz = 1.85f; alpha = 0.28f;
+        break;
+    case PLANE:
+        sx = 2.10f; sz = 1.40f; alpha = 0.26f;
+        break;
+    }
+
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_DEPTH_BUFFER_BIT);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDepthMask(GL_FALSE);
+
+    glPushMatrix();
+    glTranslatef(robot.posX, 0.018f, robot.posZ);
+    glRotatef(robot.rotY, 0.0f, 1.0f, 0.0f);
+
+    // Sombra unica del transformer.
+    // Antes habia una segunda elipse desplazada; eso generaba el efecto de "doble sombra".
+    glColor4f(0.0f, 0.0f, 0.0f, alpha);
+    drawEllipseXZ(sx, sz, 80);
+
+    glPopMatrix();
+    glDepthMask(GL_TRUE);
+    glPopAttrib();
+}
+
 
 void drawBitmapText(float x, float y, void* font, const std::string& text) {
     glRasterPos2f(x, y);
@@ -42,7 +219,7 @@ void drawOverlay() {
         " | Pieza: " + robot.getSelectedPartName();
     std::string controls1 = "Controles: 1 Robot | 2 Auto/Camion | 3 Barco | 4 Avion | W/S mover | A/D girar | G saludar | T disparar";
     std::string controls2 = "Mouse: Robot edita extremidades | Avion gira helice | Auto/Camion abre/cierra puertas";
-    std::string controls3 = "Seleccion: Q anterior | E siguiente | Mouse: Avion=helice, Auto=puertas, Robot=extremidades";
+    std::string controls3 = "Seleccion: Q anterior | E siguiente | C cambiar color | V quitar color | Mouse: Avion=helice, Auto=puertas";
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -90,46 +267,50 @@ void drawOverlay() {
 void init() {
     for (int i = 0; i < 256; i++) keys[i] = false;
 
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(0.42f, 0.72f, 1.0f, 1.0f);
     glEnable(GL_DEPTH_TEST);
-
-    // iluminacion
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-
-    // Importante: los cubos/cilindros se escalan mucho y de forma no uniforme.
-    // Sin GL_NORMALIZE, las normales quedan con longitudes incorrectas y algunas
-    // caras pueden verse blancas o demasiado brillantes segun el angulo de camara.
+    glDepthFunc(GL_LEQUAL);
+    glShadeModel(GL_SMOOTH);
     glEnable(GL_NORMALIZE);
 
+    // Iluminacion fija de OpenGL: difusa + especular.
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
     glEnable(GL_COLOR_MATERIAL);
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
-    // Evita brillos blancos fuertes en piezas pequenas/escaladas, como las puertas.
-    GLfloat matSpecular[] = { 0.05f, 0.05f, 0.05f, 1.0f };
+    GLfloat matSpecular[] = { 0.18f, 0.18f, 0.18f, 1.0f };
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, matSpecular);
-    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 8.0f);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 24.0f);
 
-    GLfloat lightPos[] = { 5.0f, 10.0f, 5.0f, 1.0f };
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
+    // Atenuacion suave para que se note mas el punto de luz del sol.
+    glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 1.0f);
+    glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.018f);
+    glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, 0.0015f);
 
-    GLfloat ambient[] = { 0.2f, 0.2f, 0.2f, 1.0f };
-    glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
+    // Niebla muy suave: ayuda a integrar el piso con el cielo.
+    GLfloat fogColor[] = { 0.42f, 0.72f, 1.0f, 1.0f };
+    glEnable(GL_FOG);
+    glFogfv(GL_FOG_COLOR, fogColor);
+    glFogi(GL_FOG_MODE, GL_LINEAR);
+    glFogf(GL_FOG_START, 22.0f);
+    glFogf(GL_FOG_END, 48.0f);
 }
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    drawSkyBackground();
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     camera.apply();
+    setupWorldLighting();
 
-    // piso
-    glColor3f(0.3f, 0.3f, 0.3f);
-    glBegin(GL_QUADS);
-    glVertex3f(-20, 0, -20);
-    glVertex3f(-20, 0, 20);
-    glVertex3f(20, 0, 20);
-    glVertex3f(20, 0, -20);
-    glEnd();
+    drawSun();
+    drawCheckerFloor();
+    drawRobotBlobShadow();
 
     robot.draw();
     drawOverlay();
