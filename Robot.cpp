@@ -2,6 +2,8 @@
 #include <cmath>
 #include <iostream>
 #include <windows.h>
+#include <mmsystem.h>
+#pragma comment(lib, "winmm.lib")
 
 const char* partNames[19] = {
     "Torso", "Cadera", "Brazo Der", "Brazo Izq", "Antebrazo Der",
@@ -172,9 +174,10 @@ void Robot::drawSphere(float r) {
 }
 
 void Robot::playGreetingSound() {
-    Beep(660, 90);
-    Beep(880, 110);
-    Beep(740, 90);
+    mciSendString(L"close saludo", NULL, 0, NULL);
+    mciSendString(L"open \"saludo.mp3\" type mpegvideo alias saludo", NULL, 0, NULL);
+    mciSendString(L"set saludo time format milliseconds", NULL, 0, NULL);
+    mciSendString(L"play saludo from 0 to 7000", NULL, 0, NULL);
 }
 
 void Robot::playShotSound() {
