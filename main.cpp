@@ -217,9 +217,9 @@ void drawOverlay() {
 
     std::string modeLine = std::string("Modo: ") + robot.getModeName() +
         " | Pieza: " + robot.getSelectedPartName();
-    std::string controls1 = "Controles: 1 Robot | 2 Auto/Camion | 3 Barco | 4 Avion | W/S mover | A/D girar | G saludar | T disparar";
-    std::string controls2 = "Mouse: Robot edita extremidades | Avion gira helice | Auto/Camion abre/cierra puertas";
-    std::string controls3 = "Seleccion: Q anterior | E siguiente | C cambiar color | V quitar color | Mouse: Avion=helice, Auto=puertas";
+    std::string controls1 = "Controles: [1] Robot | [2] Auto/Camion | [3] Barco | [4] Avion | [W]/[S] mover | [A]/[D] girar | [G] saludar | [T] disparar";
+    std::string controls2 = "Clic izq. y arrastrar: Robot mueve extremidades | Avion gira helice | Auto/Camion abre/cierra puertas";
+    std::string controls3 = "Seleccion: [Q] anterior | [E] siguiente | [C] cambiar color | [V] quitar color";
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
